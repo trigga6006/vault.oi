@@ -40,6 +40,11 @@ export class ApiKeyRepo {
     keyPrefix: string | null;
     isActive: boolean;
     createdAt: string;
+    updatedAt: string;
+    expiresAt?: string | null;
+    serviceType?: string | null;
+    generatedWhere?: string | null;
+    notes?: string | null;
   }) {
     return this.db.insert(apiKeys).values(data).returning();
   }
@@ -53,7 +58,11 @@ export class ApiKeyRepo {
       isActive: boolean;
       lastUsedAt: string;
       lastRotatedAt: string;
+      lastVerifiedAt: string;
+      updatedAt: string;
       expiresAt: string | null;
+      serviceType: string | null;
+      generatedWhere: string | null;
       notes: string | null;
     }>,
   ) {

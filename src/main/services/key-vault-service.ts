@@ -9,9 +9,13 @@ export class KeyVaultService {
     apiKey: string,
     label?: string,
     notes?: string,
+    serviceType?: string,
+    generatedWhere?: string,
+    expiresAt?: string,
   ): Promise<ApiKeyMetadata> {
     const encrypted = vaultService.encrypt(apiKey);
     const keyPrefix = apiKey.slice(0, 8);
+    const now = new Date().toISOString();
 
     const [row] = await apiKeyRepo.insert({
       providerId,
@@ -19,14 +23,15 @@ export class KeyVaultService {
       encryptedKey: encrypted,
       keyPrefix,
       isActive: true,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
+      expiresAt: expiresAt ?? null,
+      serviceType: serviceType ?? null,
+      generatedWhere: generatedWhere ?? null,
+      notes: notes ?? null,
     });
 
-    if (notes) {
-      await apiKeyRepo.update(row.id, { notes });
-    }
-
-    return this.toMetadata(row);
+    return this.toMetadata((await apiKeyRepo.getById(row.id)) ?? row);
   }
 
   /** Get decrypted key for a provider (returns plaintext — never send to renderer) */
@@ -60,6 +65,7 @@ export class KeyVaultService {
       encryptedKey: encrypted,
       keyPrefix,
       lastRotatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
   }
 
@@ -72,13 +78,23 @@ export class KeyVaultService {
   /** Update key metadata */
   async updateKey(
     id: number,
-    data: { label?: string; notes?: string; isActive?: boolean },
+    data: { label?: string; notes?: string; isActive?: boolean; serviceType?: string; generatedWhere?: string; expiresAt?: string | null; lastVerifiedAt?: string },
   ): Promise<void> {
     const update: Record<string, unknown> = {};
     if (data.label !== undefined) update.keyLabel = data.label;
     if (data.notes !== undefined) update.notes = data.notes;
+    if (data.serviceType !== undefined) update.serviceType = data.serviceType;
+    if (data.generatedWhere !== undefined) update.generatedWhere = data.generatedWhere;
+    if (data.expiresAt !== undefined) update.expiresAt = data.expiresAt;
+    if (data.lastVerifiedAt !== undefined) update.lastVerifiedAt = data.lastVerifiedAt;
     if (data.isActive !== undefined) update.isActive = data.isActive;
+    update.updatedAt = new Date().toISOString();
     await apiKeyRepo.update(id, update as any);
+  }
+
+  async markVerified(id: number): Promise<void> {
+    const now = new Date().toISOString();
+    await apiKeyRepo.update(id, { lastVerifiedAt: now, updatedAt: now });
   }
 
   /** Delete a key */
@@ -95,7 +111,7 @@ export class KeyVaultService {
     for (const row of rows) {
       const plaintext = decryptFn(row.encryptedKey);
       const newEncrypted = encryptFn(plaintext);
-      await apiKeyRepo.update(row.id, { encryptedKey: newEncrypted });
+      await apiKeyRepo.update(row.id, { encryptedKey: newEncrypted, updatedAt: new Date().toISOString() });
     }
   }
 
@@ -107,9 +123,13 @@ export class KeyVaultService {
       keyPrefix: row.keyPrefix,
       isActive: row.isActive,
       createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
       lastUsedAt: row.lastUsedAt,
       lastRotatedAt: row.lastRotatedAt,
+      lastVerifiedAt: row.lastVerifiedAt,
       expiresAt: row.expiresAt,
+      serviceType: row.serviceType,
+      generatedWhere: row.generatedWhere,
       notes: row.notes,
     };
   }

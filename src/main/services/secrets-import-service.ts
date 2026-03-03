@@ -78,6 +78,7 @@ export class SecretsImportService {
         keyPrefix: item.secret.slice(0, 8),
         isActive: true,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
       if (item.notes) {

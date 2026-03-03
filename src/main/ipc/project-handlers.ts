@@ -43,4 +43,16 @@ export function registerProjectHandlers(): void {
   registerHandler('projects:scan-intelligence', async ({ projectId }) => {
     return projectIntelligenceService.scanProject(projectId);
   });
+
+  registerHandler('projects:get-env-export-plan', async ({ projectId, environment }) => {
+    return projectService.getEnvExportPlan(projectId, environment);
+  });
+
+  registerHandler('projects:export-env-safe', async ({ projectId, environment, selectedKeys, overwriteConflicts }) => {
+    return projectService.exportEnvSafe({ projectId, environment, selectedKeys, overwriteConflicts });
+  });
+
+  registerHandler('projects:scan-leak-risk', async ({ projectId }) => {
+    return projectService.scanLeakRisk(projectId);
+  });
 }
