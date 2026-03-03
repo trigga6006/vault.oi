@@ -2,8 +2,9 @@ import type { ProviderRegistrySummary, ActivatePayload, HealthCheckResult, Model
 import type { ProviderConfigRecord, AlertRuleRecord, AlertEventRecord, RequestLogRecord, ErrorRecordRow, UsageMetricRecord } from './models.types';
 import type { TokenUsage, CalculatedCost } from './pricing.types';
 import type { VaultStatus, ApiKeyMetadata, StoreKeyPayload, RotateKeyPayload, UpdateKeyPayload, TestKeyPayload, VaultInitPayload, VaultUnlockPayload, VaultChangePasswordPayload, VaultAutoLockPayload, SecretsImportResult } from './vault.types';
-import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload } from './project.types';
+import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload, ProjectIntelligence } from './project.types';
 import type { CredentialRecord, CreateCredentialPayload, UpdateCredentialPayload } from './credentials.types';
+import type { VaultProfile, VaultProfileState, CreateVaultProfilePayload, SwitchVaultProfilePayload } from './profile.types';
 
 export interface MetricsQuery {
   providerId?: string;
@@ -122,6 +123,13 @@ export interface IpcChannelMap {
   'projects:unassign-key': { req: UnassignKeyPayload; res: void };
   'projects:get-keys': { req: { projectId: number }; res: ProjectKeyAssignment[] };
   'projects:set-active': { req: SetActiveProjectPayload; res: { projectId: number | null } };
+  'projects:scan-intelligence': { req: { projectId: number }; res: ProjectIntelligence };
+
+
+  // Vault profiles
+  'profiles:get-state': { req: void; res: VaultProfileState };
+  'profiles:create': { req: CreateVaultProfilePayload; res: VaultProfile };
+  'profiles:switch': { req: SwitchVaultProfilePayload; res: { success: boolean } };
 
 
   // Credentials

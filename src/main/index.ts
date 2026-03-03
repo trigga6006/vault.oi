@@ -144,6 +144,14 @@ app.on('ready', async () => {
 
   // Then initialize backend services
   try {
+    const { profileService } = await import('./services/profile-service');
+    const state = await profileService.initialize();
+    console.log(`[Main] Active profile: ${state.activeProfileId}`);
+  } catch (err) {
+    console.error('[Main] Profile init failed:', err);
+  }
+
+  try {
     const { initializeDatabase } = await import('./database/connection');
     initializeDatabase();
     console.log('[Main] Database initialized');

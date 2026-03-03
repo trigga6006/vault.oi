@@ -46,6 +46,7 @@ import { registerProxyHandlers } from './proxy-handlers';
 import { registerVaultHandlers } from './vault-handlers';
 import { registerKeyHandlers } from './key-handlers';
 import { registerProjectHandlers } from './project-handlers';
+import { registerProfileHandlers } from './profile-handlers';
 import { registerRotationHandlers, registerPricingUpdateHandlers } from './rotation-handlers';
 import { registerCredentialsHandlers } from './credentials-handlers';
 
@@ -60,6 +61,7 @@ export function registerAllHandlers(): void {
   registerAlertHandlers();
   registerProxyHandlers();
   registerProjectHandlers();
+  registerProfileHandlers();
   registerCredentialsHandlers();
   registerRotationHandlers();
   registerPricingUpdateHandlers();

@@ -6,11 +6,21 @@ import * as schema from './schema';
 
 let db: ReturnType<typeof drizzle> | null = null;
 let sqlite: Database.Database | null = null;
+let databaseProfile = 'personal';
+
+function profileToDbFile(profileId: string): string {
+  if (profileId === 'personal') return 'omniview.db';
+  return `omniview-${profileId}.db`;
+}
+
+export function setDatabaseProfile(profileId: string) {
+  databaseProfile = profileId;
+}
 
 export function getDatabase() {
   if (db) return db;
 
-  const dbPath = path.join(app.getPath('userData'), 'omniview.db');
+  const dbPath = path.join(app.getPath('userData'), profileToDbFile(databaseProfile));
   sqlite = new Database(dbPath);
 
   // Enable WAL mode for better concurrent read performance

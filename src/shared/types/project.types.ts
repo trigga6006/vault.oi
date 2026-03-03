@@ -52,3 +52,26 @@ export interface UnassignKeyPayload {
 export interface SetActiveProjectPayload {
   projectId: number | null;
 }
+
+export interface RequiredKeyOccurrence {
+  keyName: string;
+  sourceFile: string;
+  line: number;
+  detectionMethod: 'dotenv' | 'docker-compose' | 'typescript' | 'python';
+}
+
+export interface ProjectIntelligence {
+  projectId: number;
+  scannedAt: string;
+  repoPath: string | null;
+  scannedFiles: string[];
+  requiredKeys: string[];
+  missingKeys: string[];
+  unusedKeys: string[];
+  duplicateKeys: Array<{
+    keyName: string;
+    projectIds: number[];
+  }>;
+  occurrences: RequiredKeyOccurrence[];
+  warnings: string[];
+}
