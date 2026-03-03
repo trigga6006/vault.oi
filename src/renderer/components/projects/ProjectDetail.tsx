@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EnvironmentBadge } from './EnvironmentBadge';
 import type {
   Environment,
+  ProjectIntelligence,
   ProjectKeyAssignment,
   ProjectRecord,
 } from '../../../shared/types/project.types';
@@ -20,6 +21,8 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
   const [allKeys, setAllKeys] = useState<ApiKeyMetadata[]>([]);
   const [addingEnv, setAddingEnv] = useState<Environment | null>(null);
   const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null);
+  const [intelligence, setIntelligence] = useState<ProjectIntelligence | null>(null);
+  const [scanning, setScanning] = useState(false);
 
   const fetchAssignments = useCallback(async () => {
     try {
@@ -44,10 +47,25 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
     }
   }, []);
 
+  const fetchIntelligence = useCallback(async () => {
+    setScanning(true);
+    try {
+      const result = (await window.omniview.invoke('projects:scan-intelligence', {
+        projectId: project.id,
+      })) as ProjectIntelligence;
+      setIntelligence(result);
+    } catch {
+      toast.error('Failed to scan repository config files');
+    } finally {
+      setScanning(false);
+    }
+  }, [project.id]);
+
   useEffect(() => {
     fetchAssignments();
     fetchKeys();
-  }, [fetchAssignments, fetchKeys]);
+    fetchIntelligence();
+  }, [fetchAssignments, fetchIntelligence, fetchKeys]);
 
   async function handleAssign(env: Environment) {
     if (!selectedKeyId) return;
@@ -62,6 +80,7 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
       setAddingEnv(null);
       setSelectedKeyId(null);
       await fetchAssignments();
+      await fetchIntelligence();
     } catch {
       toast.error('Failed to assign secret');
     }
@@ -76,6 +95,7 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
       });
       toast.success('Secret removed');
       await fetchAssignments();
+      await fetchIntelligence();
     } catch {
       toast.error('Failed to remove secret');
     }
@@ -113,6 +133,92 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
           {project.description}
         </p>
       )}
+
+      <section className="glass rounded-[24px] border border-white/8 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Repository key intelligence</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Scan .env, .env.local, config.ts, settings.py, and docker-compose.yml for required key names.
+            </p>
+          </div>
+          <button
+            onClick={fetchIntelligence}
+            disabled={scanning}
+            className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs text-foreground hover:bg-accent disabled:opacity-60"
+          >
+            <RefreshCw className={`h-3 w-3 ${scanning ? 'animate-spin' : ''}`} />
+            {scanning ? 'Scanning...' : 'Scan now'}
+          </button>
+        </div>
+
+        {intelligence && (
+          <div className="space-y-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+              <span>Scanned {intelligence.scannedFiles.length} file(s)</span>
+              <span>•</span>
+              <span>{new Date(intelligence.scannedAt).toLocaleString()}</span>
+              {intelligence.repoPath && (
+                <>
+                  <span>•</span>
+                  <span className="truncate max-w-[26rem]">{intelligence.repoPath}</span>
+                </>
+              )}
+            </div>
+
+            {intelligence.warnings.length > 0 && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-200 space-y-1">
+                {intelligence.warnings.map((warning) => (
+                  <p key={warning}>• {warning}</p>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3">
+                <p className="text-[11px] text-muted-foreground mb-1">Missing keys</p>
+                {intelligence.missingKeys.length === 0 ? (
+                  <p className="text-emerald-300">None</p>
+                ) : (
+                  <ul className="space-y-1 text-foreground">
+                    {intelligence.missingKeys.map((key) => (
+                      <li key={key}>{key}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                <p className="text-[11px] text-muted-foreground mb-1">Unused assigned keys</p>
+                {intelligence.unusedKeys.length === 0 ? (
+                  <p className="text-emerald-300">None</p>
+                ) : (
+                  <ul className="space-y-1 text-foreground">
+                    {intelligence.unusedKeys.map((key) => (
+                      <li key={key}>{key}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-primary/30 bg-primary/10 p-3">
+                <p className="text-[11px] text-muted-foreground mb-1">Duplicate keys across projects</p>
+                {intelligence.duplicateKeys.length === 0 ? (
+                  <p className="text-emerald-300">None</p>
+                ) : (
+                  <ul className="space-y-1 text-foreground">
+                    {intelligence.duplicateKeys.map((entry) => (
+                      <li key={entry.keyName}>
+                        {entry.keyName} ({entry.projectIds.length} projects)
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {environments.map((env) => {
         const envAssignments = assignments.filter((item) => item.environment === env);

@@ -1,5 +1,6 @@
 import { registerHandler } from './register-all';
 import { projectService } from '../services/project-service';
+import { projectIntelligenceService } from '../services/project-intelligence-service';
 
 export function registerProjectHandlers(): void {
   registerHandler('projects:list', async () => {
@@ -37,5 +38,9 @@ export function registerProjectHandlers(): void {
   registerHandler('projects:set-active', async ({ projectId }) => {
     // Just acknowledge — active project is tracked in renderer state
     return { projectId };
+  });
+
+  registerHandler('projects:scan-intelligence', async ({ projectId }) => {
+    return projectIntelligenceService.scanProject(projectId);
   });
 }
