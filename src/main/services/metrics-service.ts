@@ -1,6 +1,5 @@
 import { usageMetricsRepo } from '../database/repositories/usage-metrics.repo';
 import { usageSnapshotRepo } from '../database/repositories/usage-snapshot.repo';
-import { requestLogRepo } from '../database/repositories/request-log.repo';
 import { getBucketStart } from '../../shared/utils/time-buckets';
 import type { Granularity } from '../../shared/utils/time-buckets';
 import type { MetricsSummary } from '../../shared/types/ipc.types';

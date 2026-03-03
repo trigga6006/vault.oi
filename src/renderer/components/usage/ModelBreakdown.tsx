@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { cn } from '../ui/cn';
 import { ProviderLogo } from '../providers/ProviderLogo';
 
 interface ModelBreakdownProps {

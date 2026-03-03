@@ -1,6 +1,6 @@
 import { registerHandler } from './register-all';
 import { providerRegistry } from '../../providers/registry';
-import { usageFetcher } from '../services/usage-fetcher';
+import type { UsageData } from '../../shared/types/provider.types';
 
 export function registerUsageHandlers(): void {
   registerHandler('usage:fetch', async (payload) => {
@@ -23,7 +23,7 @@ export function registerUsageHandlers(): void {
     );
 
     return results
-      .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+      .filter((r): r is PromiseFulfilledResult<UsageData> => r.status === 'fulfilled')
       .map((r) => r.value);
   });
 }
