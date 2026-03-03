@@ -8,13 +8,25 @@ let db: ReturnType<typeof drizzle> | null = null;
 let sqlite: Database.Database | null = null;
 let databaseProfile = 'personal';
 
+const PROFILE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function sanitizeProfileId(profileId: string): string {
+  const normalized = profileId.trim().toLowerCase();
+  if (!PROFILE_ID_PATTERN.test(normalized)) {
+    return 'personal';
+  }
+
+  return normalized;
+}
+
 function profileToDbFile(profileId: string): string {
-  if (profileId === 'personal') return 'omniview.db';
-  return `omniview-${profileId}.db`;
+  const safeProfileId = sanitizeProfileId(profileId);
+  if (safeProfileId === 'personal') return 'omniview.db';
+  return `omniview-${safeProfileId}.db`;
 }
 
 export function setDatabaseProfile(profileId: string) {
-  databaseProfile = profileId;
+  databaseProfile = sanitizeProfileId(profileId);
 }
 
 export function getDatabase() {
