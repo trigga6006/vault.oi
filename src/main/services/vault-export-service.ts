@@ -107,6 +107,7 @@ export class VaultExportService {
         keyPrefix: key.keyPrefix,
         isActive: true,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
       if (key.notes) {
         const keys = await apiKeyRepo.list();

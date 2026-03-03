@@ -6,12 +6,16 @@ export function registerKeyHandlers(): void {
     return keyVaultService.listKeys();
   });
 
-  registerHandler('keys:store', async ({ providerId, apiKey, label, notes }) => {
-    return keyVaultService.storeKey(providerId, apiKey, label, notes);
+  registerHandler('keys:store', async ({ providerId, apiKey, label, notes, serviceType, generatedWhere, expiresAt }) => {
+    return keyVaultService.storeKey(providerId, apiKey, label, notes, serviceType, generatedWhere, expiresAt);
   });
 
-  registerHandler('keys:update', async ({ id, label, notes, isActive }) => {
-    await keyVaultService.updateKey(id, { label, notes, isActive });
+  registerHandler('keys:update', async ({ id, label, notes, isActive, serviceType, generatedWhere, expiresAt, lastVerifiedAt }) => {
+    await keyVaultService.updateKey(id, { label, notes, isActive, serviceType, generatedWhere, expiresAt, lastVerifiedAt });
+  });
+
+  registerHandler('keys:mark-verified', async ({ id }) => {
+    await keyVaultService.markVerified(id);
   });
 
   registerHandler('keys:rotate', async ({ id, newKey }) => {

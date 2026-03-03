@@ -2,7 +2,7 @@ import type { ProviderRegistrySummary, ActivatePayload, HealthCheckResult, Model
 import type { ProviderConfigRecord, AlertRuleRecord, AlertEventRecord, RequestLogRecord, ErrorRecordRow, UsageMetricRecord } from './models.types';
 import type { TokenUsage, CalculatedCost } from './pricing.types';
 import type { VaultStatus, ApiKeyMetadata, StoreKeyPayload, RotateKeyPayload, UpdateKeyPayload, TestKeyPayload, VaultInitPayload, VaultUnlockPayload, VaultChangePasswordPayload, VaultAutoLockPayload, SecretsImportResult } from './vault.types';
-import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload, ProjectIntelligence } from './project.types';
+import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload, ProjectIntelligence, ProjectEnvExportPlan, ProjectLeakRiskReport, Environment } from './project.types';
 import type { CredentialRecord, CreateCredentialPayload, UpdateCredentialPayload } from './credentials.types';
 import type { VaultProfile, VaultProfileState, CreateVaultProfilePayload, SwitchVaultProfilePayload } from './profile.types';
 
@@ -108,6 +108,7 @@ export interface IpcChannelMap {
   'keys:list': { req: void; res: ApiKeyMetadata[] };
   'keys:store': { req: StoreKeyPayload; res: ApiKeyMetadata };
   'keys:update': { req: UpdateKeyPayload; res: void };
+  'keys:mark-verified': { req: { id: number }; res: void };
   'keys:rotate': { req: RotateKeyPayload; res: void };
   'keys:delete': { req: { id: number }; res: void };
   'keys:test': { req: TestKeyPayload; res: { success: boolean; message?: string } };
@@ -124,6 +125,9 @@ export interface IpcChannelMap {
   'projects:get-keys': { req: { projectId: number }; res: ProjectKeyAssignment[] };
   'projects:set-active': { req: SetActiveProjectPayload; res: { projectId: number | null } };
   'projects:scan-intelligence': { req: { projectId: number }; res: ProjectIntelligence };
+  'projects:get-env-export-plan': { req: { projectId: number; environment: Environment }; res: ProjectEnvExportPlan };
+  'projects:export-env-safe': { req: { projectId: number; environment: Environment; selectedKeys: string[]; overwriteConflicts: boolean }; res: { exported: number; path: string } };
+  'projects:scan-leak-risk': { req: { projectId: number }; res: ProjectLeakRiskReport };
 
 
   // Vault profiles

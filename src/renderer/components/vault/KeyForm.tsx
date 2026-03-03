@@ -25,7 +25,7 @@ const PROVIDERS = [
 ];
 
 interface KeyFormProps {
-  onSave: (data: { providerId: string; apiKey: string; label: string; notes: string }) => Promise<void>;
+  onSave: (data: { providerId: string; apiKey: string; label: string; notes: string; serviceType: string; generatedWhere: string; expiresAt: string }) => Promise<void>;
   onCancel: () => void;
   /** If set, this is a rotation form */
   rotateKeyId?: number;
@@ -37,6 +37,9 @@ export function KeyForm({ onSave, onCancel, rotateKeyId, rotateProviderId }: Key
   const [apiKey, setApiKey] = useState('');
   const [label, setLabel] = useState('');
   const [notes, setNotes] = useState('');
+  const [serviceType, setServiceType] = useState('api');
+  const [generatedWhere, setGeneratedWhere] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
   const [showKey, setShowKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -73,7 +76,7 @@ export function KeyForm({ onSave, onCancel, rotateKeyId, rotateProviderId }: Key
     if (!providerId || !apiKey) return;
     setSaving(true);
     try {
-      await onSave({ providerId, apiKey, label: label || 'Default', notes });
+      await onSave({ providerId, apiKey, label: label || 'Default', notes, serviceType, generatedWhere, expiresAt });
     } finally {
       setSaving(false);
     }
@@ -115,6 +118,49 @@ export function KeyForm({ onSave, onCancel, rotateKeyId, rotateProviderId }: Key
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {!isRotation && (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Service type</label>
+              <select
+                value={serviceType}
+                onChange={(e) => setServiceType(e.target.value)}
+                className="w-full rounded-lg bg-secondary/50 border border-border px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+              >
+                <option value="api">API</option>
+                <option value="database">Database</option>
+                <option value="webhook">Webhook</option>
+                <option value="oauth">OAuth</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Expiration date</label>
+              <input
+                type="date"
+                value={expiresAt}
+                onChange={(e) => setExpiresAt(e.target.value)}
+                className="w-full rounded-lg bg-secondary/50 border border-border px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+              />
+            </div>
+          </div>
+        )}
+
+        {!isRotation && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              Generated where <span className="text-muted-foreground/60">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={generatedWhere}
+              onChange={(e) => setGeneratedWhere(e.target.value)}
+              placeholder="e.g. Stripe dashboard / personal account"
+              className="w-full rounded-lg bg-secondary/50 border border-border px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+            />
           </div>
         )}
 

@@ -75,3 +75,33 @@ export interface ProjectIntelligence {
   occurrences: RequiredKeyOccurrence[];
   warnings: string[];
 }
+
+export interface EnvExportDiffEntry {
+  key: string;
+  vaultValue: string;
+  existingValue: string | null;
+  status: 'new' | 'changed' | 'unchanged';
+}
+
+export interface ProjectEnvExportPlan {
+  projectId: number;
+  environment: Environment;
+  targetPath: string;
+  entries: EnvExportDiffEntry[];
+  warnings: string[];
+}
+
+export interface LeakRiskFinding {
+  type: 'stripe-secret' | 'generic-api-key' | 'token-pattern' | 'possible-commit';
+  message: string;
+  file: string;
+  line: number;
+  snippet: string;
+}
+
+export interface ProjectLeakRiskReport {
+  projectId: number;
+  scannedAt: string;
+  findings: LeakRiskFinding[];
+  warnings: string[];
+}
