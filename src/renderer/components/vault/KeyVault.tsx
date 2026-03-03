@@ -61,6 +61,9 @@ export function KeyVault() {
     apiKey: string;
     label: string;
     notes: string;
+    serviceType: string;
+    generatedWhere: string;
+    expiresAt: string;
   }) {
     try {
       await window.omniview.invoke('keys:store', {
@@ -68,6 +71,9 @@ export function KeyVault() {
         apiKey: data.apiKey,
         label: data.label,
         notes: data.notes,
+        serviceType: data.serviceType,
+        generatedWhere: data.generatedWhere,
+        expiresAt: data.expiresAt || undefined,
       });
       toast.success('Secret stored securely');
       setShowForm(false);
@@ -115,6 +121,16 @@ export function KeyVault() {
       await fetchKeys();
     } catch {
       toast.error('Failed to update secret');
+    }
+  }
+
+  async function handleVerify(id: number) {
+    try {
+      await window.omniview.invoke('keys:mark-verified', { id });
+      toast.success('Secret marked as verified');
+      await fetchKeys();
+    } catch {
+      toast.error('Failed to mark secret as verified');
     }
   }
 
@@ -166,7 +182,7 @@ export function KeyVault() {
     const filtered = normalized
       ? keys.filter((key) => {
         const providerName = PROVIDER_NAMES[key.providerId] ?? key.providerId;
-        return [key.keyLabel, key.providerId, providerName, key.notes ?? '', key.keyPrefix ?? '']
+        return [key.keyLabel, key.providerId, providerName, key.notes ?? '', key.keyPrefix ?? '', key.serviceType ?? '', key.generatedWhere ?? '']
           .join(' ')
           .toLowerCase()
           .includes(normalized);
@@ -244,6 +260,7 @@ export function KeyVault() {
                     onRotate={handleRotate}
                     onDelete={handleDelete}
                     onToggleActive={handleToggleActive}
+                    onVerify={handleVerify}
                   />
                 ))}
               </AnimatePresence>

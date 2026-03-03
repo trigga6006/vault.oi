@@ -187,9 +187,13 @@ export function initializeDatabase() {
       key_prefix TEXT,
       is_active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
       last_used_at TEXT,
       last_rotated_at TEXT,
+      last_verified_at TEXT,
       expires_at TEXT,
+      service_type TEXT,
+      generated_where TEXT,
       notes TEXT
     );
 
@@ -267,6 +271,23 @@ export function initializeDatabase() {
   }
   if (!columnNames.includes('git_branch')) {
     raw.exec(`ALTER TABLE request_logs ADD COLUMN git_branch TEXT`);
+  }
+
+
+  const keyColumns = raw.pragma('table_info(api_keys)') as Array<{ name: string }>;
+  const keyColumnNames = keyColumns.map((c) => c.name);
+  if (!keyColumnNames.includes('updated_at')) {
+    raw.exec(`ALTER TABLE api_keys ADD COLUMN updated_at TEXT`);
+    raw.exec(`UPDATE api_keys SET updated_at = created_at WHERE updated_at IS NULL`);
+  }
+  if (!keyColumnNames.includes('last_verified_at')) {
+    raw.exec(`ALTER TABLE api_keys ADD COLUMN last_verified_at TEXT`);
+  }
+  if (!keyColumnNames.includes('service_type')) {
+    raw.exec(`ALTER TABLE api_keys ADD COLUMN service_type TEXT`);
+  }
+  if (!keyColumnNames.includes('generated_where')) {
+    raw.exec(`ALTER TABLE api_keys ADD COLUMN generated_where TEXT`);
   }
 
   const metricsColumns = raw.pragma('table_info(usage_metrics)') as Array<{ name: string }>;

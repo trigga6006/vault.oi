@@ -108,6 +108,7 @@ export interface IpcChannelMap {
   'keys:list': { req: void; res: ApiKeyMetadata[] };
   'keys:store': { req: StoreKeyPayload; res: ApiKeyMetadata };
   'keys:update': { req: UpdateKeyPayload; res: void };
+  'keys:mark-verified': { req: { id: number }; res: void };
   'keys:rotate': { req: RotateKeyPayload; res: void };
   'keys:delete': { req: { id: number }; res: void };
   'keys:test': { req: TestKeyPayload; res: { success: boolean; message?: string } };

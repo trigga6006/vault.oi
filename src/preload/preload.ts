@@ -37,6 +37,7 @@ const INVOKE_CHANNELS = new Set<IpcChannel>([
   'keys:list',
   'keys:store',
   'keys:update',
+  'keys:mark-verified',
   'keys:rotate',
   'keys:delete',
   'keys:test',

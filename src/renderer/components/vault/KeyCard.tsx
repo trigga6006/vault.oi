@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Eye, Key, RotateCcw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { BadgeCheck, Eye, Key, RotateCcw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { cn } from '../ui/cn';
 import { ProviderLogo } from '../providers/ProviderLogo';
 import type { ApiKeyMetadata } from '../../../shared/types/vault.types';
@@ -11,16 +11,14 @@ interface KeyCardProps {
   onRotate: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleActive: (id: number, isActive: boolean) => void;
+  onVerify: (id: number) => void;
 }
 
-export function KeyCard({ keyData, providerName, onReveal, onRotate, onDelete, onToggleActive }: KeyCardProps) {
-  const age = keyData.createdAt
-    ? formatAge(new Date(keyData.createdAt))
-    : 'Unknown';
-
-  const lastUsed = keyData.lastUsedAt
-    ? formatAge(new Date(keyData.lastUsedAt)) + ' ago'
-    : 'Never';
+export function KeyCard({ keyData, providerName, onReveal, onRotate, onDelete, onToggleActive, onVerify }: KeyCardProps) {
+  const createdOn = formatDate(keyData.createdAt);
+  const updatedOn = formatDate(keyData.updatedAt);
+  const lastUsed = keyData.lastUsedAt ? formatAge(new Date(keyData.lastUsedAt)) + ' ago' : 'Never';
+  const lastVerified = keyData.lastVerifiedAt ? formatDate(keyData.lastVerifiedAt) : 'Not yet';
 
   return (
     <motion.div
@@ -52,6 +50,13 @@ export function KeyCard({ keyData, providerName, onReveal, onRotate, onDelete, o
         </div>
 
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => onVerify(keyData.id)}
+            className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="Mark as manually verified"
+          >
+            <BadgeCheck className="h-3.5 w-3.5" />
+          </button>
           <button
             onClick={() => onReveal(keyData.id)}
             className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
@@ -93,9 +98,16 @@ export function KeyCard({ keyData, providerName, onReveal, onRotate, onDelete, o
           <code className="font-mono">{keyData.keyPrefix ?? '****'}...****</code>
         </div>
         <span>|</span>
-        <span>Added {age} ago</span>
-        <span>|</span>
         <span>Last used: {lastUsed}</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground">
+        <p>Created: <span className="text-foreground">{createdOn}</span></p>
+        <p>Last modified: <span className="text-foreground">{updatedOn}</span></p>
+        <p>Last verified: <span className="text-foreground">{lastVerified}</span></p>
+        <p>Expires: <span className="text-foreground">{keyData.expiresAt ? formatDate(keyData.expiresAt) : 'Not set'}</span></p>
+        <p>Service type: <span className="text-foreground">{keyData.serviceType ?? 'Not set'}</span></p>
+        <p className="truncate">Generated: <span className="text-foreground">{keyData.generatedWhere ?? 'Not set'}</span></p>
       </div>
 
       {keyData.notes && (
@@ -118,4 +130,10 @@ function formatAge(date: Date): string {
   if (days < 30) return `${days}d`;
   const months = Math.floor(days / 30);
   return `${months}mo`;
+}
+
+function formatDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown';
+  return date.toLocaleString();
 }

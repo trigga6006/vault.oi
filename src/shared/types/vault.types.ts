@@ -11,9 +11,13 @@ export interface ApiKeyMetadata {
   keyPrefix: string | null;
   isActive: boolean;
   createdAt: string;
+  updatedAt: string;
   lastUsedAt: string | null;
   lastRotatedAt: string | null;
+  lastVerifiedAt: string | null;
   expiresAt: string | null;
+  serviceType: string | null;
+  generatedWhere: string | null;
   notes: string | null;
 }
 
@@ -22,6 +26,9 @@ export interface StoreKeyPayload {
   apiKey: string;
   label?: string;
   notes?: string;
+  serviceType?: string;
+  generatedWhere?: string;
+  expiresAt?: string;
 }
 
 export interface RotateKeyPayload {
@@ -33,6 +40,10 @@ export interface UpdateKeyPayload {
   id: number;
   label?: string;
   notes?: string;
+  serviceType?: string;
+  generatedWhere?: string;
+  expiresAt?: string | null;
+  lastVerifiedAt?: string;
   isActive?: boolean;
 }
 

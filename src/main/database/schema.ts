@@ -126,9 +126,13 @@ export const apiKeys = sqliteTable('api_keys', {
   keyPrefix: text('key_prefix'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
   lastUsedAt: text('last_used_at'),
   lastRotatedAt: text('last_rotated_at'),
+  lastVerifiedAt: text('last_verified_at'),
   expiresAt: text('expires_at'),
+  serviceType: text('service_type'),
+  generatedWhere: text('generated_where'),
   notes: text('notes'),
 });
 
