@@ -3,6 +3,7 @@ import { useProxy } from '../../hooks/useProxy';
 import { useVault } from '../../hooks/useVault';
 import { useUiStore } from '../../store/ui-store';
 import { cn } from '../ui/cn';
+import { VaultProfileSwitcher } from './VaultProfileSwitcher';
 
 export function Header() {
   const { toggleCommandPalette, theme, setTheme } = useUiStore();
@@ -36,7 +37,8 @@ export function Header() {
         </kbd>
       </button>
 
-      <div className="flex w-40 items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
+        <VaultProfileSwitcher />
         <div className="no-drag flex items-center rounded-xl border border-border bg-secondary/50 p-1">
           <ThemeButton
             active={theme === 'dark'}

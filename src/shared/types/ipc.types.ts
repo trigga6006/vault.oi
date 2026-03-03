@@ -3,6 +3,7 @@ import type { ProviderConfigRecord, AlertRuleRecord, AlertEventRecord, RequestLo
 import type { TokenUsage, CalculatedCost } from './pricing.types';
 import type { VaultStatus, ApiKeyMetadata, StoreKeyPayload, RotateKeyPayload, UpdateKeyPayload, TestKeyPayload, VaultInitPayload, VaultUnlockPayload, VaultChangePasswordPayload, VaultAutoLockPayload } from './vault.types';
 import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload, ProjectIntelligence } from './project.types';
+import type { VaultProfile, VaultProfileState, CreateVaultProfilePayload, SwitchVaultProfilePayload } from './profile.types';
 
 export interface MetricsQuery {
   providerId?: string;
@@ -120,6 +121,12 @@ export interface IpcChannelMap {
   'projects:get-keys': { req: { projectId: number }; res: ProjectKeyAssignment[] };
   'projects:set-active': { req: SetActiveProjectPayload; res: { projectId: number | null } };
   'projects:scan-intelligence': { req: { projectId: number }; res: ProjectIntelligence };
+
+
+  // Vault profiles
+  'profiles:get-state': { req: void; res: VaultProfileState };
+  'profiles:create': { req: CreateVaultProfilePayload; res: VaultProfile };
+  'profiles:switch': { req: SwitchVaultProfilePayload; res: { success: boolean } };
 
   // Key rotation
   'keys:rotation-policies': { req: void; res: Array<{ id: number; projectId: number | null; providerId: string; rotationIntervalDays: number; reminderDaysBefore: number; enabled: boolean }> };
