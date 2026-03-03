@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EnvironmentBadge } from './EnvironmentBadge';
 import type {
   Environment,
+  ProjectEnvExportPlan,
   ProjectIntelligence,
   ProjectKeyAssignment,
+  ProjectLeakRiskReport,
   ProjectRecord,
 } from '../../../shared/types/project.types';
 import type { ApiKeyMetadata } from '../../../shared/types/vault.types';
@@ -23,6 +25,15 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
   const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null);
   const [intelligence, setIntelligence] = useState<ProjectIntelligence | null>(null);
   const [scanning, setScanning] = useState(false);
+
+  const [exportEnvironment, setExportEnvironment] = useState<Environment>('dev');
+  const [exportPlan, setExportPlan] = useState<ProjectEnvExportPlan | null>(null);
+  const [selectedExportKeys, setSelectedExportKeys] = useState<string[]>([]);
+  const [overwriteConflicts, setOverwriteConflicts] = useState(false);
+  const [loadingExportPlan, setLoadingExportPlan] = useState(false);
+
+  const [leakReport, setLeakReport] = useState<ProjectLeakRiskReport | null>(null);
+  const [scanningLeakRisk, setScanningLeakRisk] = useState(false);
 
   const fetchAssignments = useCallback(async () => {
     try {
@@ -61,11 +72,43 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
     }
   }, [project.id]);
 
+  const fetchExportPlan = useCallback(async () => {
+    setLoadingExportPlan(true);
+    try {
+      const result = (await window.omniview.invoke('projects:get-env-export-plan', {
+        projectId: project.id,
+        environment: exportEnvironment,
+      })) as ProjectEnvExportPlan;
+      setExportPlan(result);
+      setSelectedExportKeys(result.entries.map((entry) => entry.key));
+    } catch {
+      toast.error('Failed to generate .env export diff');
+    } finally {
+      setLoadingExportPlan(false);
+    }
+  }, [exportEnvironment, project.id]);
+
+  const fetchLeakRisk = useCallback(async () => {
+    setScanningLeakRisk(true);
+    try {
+      const result = (await window.omniview.invoke('projects:scan-leak-risk', {
+        projectId: project.id,
+      })) as ProjectLeakRiskReport;
+      setLeakReport(result);
+    } catch {
+      toast.error('Failed to run leak-risk scanner');
+    } finally {
+      setScanningLeakRisk(false);
+    }
+  }, [project.id]);
+
   useEffect(() => {
     fetchAssignments();
     fetchKeys();
     fetchIntelligence();
-  }, [fetchAssignments, fetchIntelligence, fetchKeys]);
+    fetchExportPlan();
+    fetchLeakRisk();
+  }, [fetchAssignments, fetchExportPlan, fetchIntelligence, fetchKeys, fetchLeakRisk]);
 
   async function handleAssign(env: Environment) {
     if (!selectedKeyId) return;
@@ -81,6 +124,7 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
       setSelectedKeyId(null);
       await fetchAssignments();
       await fetchIntelligence();
+      await fetchExportPlan();
     } catch {
       toast.error('Failed to assign secret');
     }
@@ -96,9 +140,33 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
       toast.success('Secret removed');
       await fetchAssignments();
       await fetchIntelligence();
+      await fetchExportPlan();
     } catch {
       toast.error('Failed to remove secret');
     }
+  }
+
+  async function handleExportEnv() {
+    if (!exportPlan) return;
+    try {
+      const result = await window.omniview.invoke('projects:export-env-safe', {
+        projectId: project.id,
+        environment: exportEnvironment,
+        selectedKeys: selectedExportKeys,
+        overwriteConflicts,
+      });
+      toast.success(`Exported ${result.exported} key(s) to ${result.path}`);
+      await fetchExportPlan();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Export failed');
+    }
+  }
+
+  function toggleSelectedKey(key: string, checked: boolean) {
+    setSelectedExportKeys((current) => {
+      if (checked) return Array.from(new Set([...current, key]));
+      return current.filter((item) => item !== key);
+    });
   }
 
   const environments: Environment[] = ['dev', 'staging', 'prod'];
@@ -133,6 +201,146 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
           {project.description}
         </p>
       )}
+
+      <section className="glass rounded-[24px] border border-white/8 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">.env diff + safe export mode</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Compare Vault values with your existing .env, choose specific keys, and export safely.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={exportEnvironment}
+              onChange={(e) => setExportEnvironment(e.target.value as Environment)}
+              className="rounded-xl border border-border bg-secondary/50 px-3 py-2 text-xs text-foreground outline-none"
+            >
+              {environments.map((env) => (
+                <option key={env} value={env}>{env}</option>
+              ))}
+            </select>
+            <button
+              onClick={fetchExportPlan}
+              disabled={loadingExportPlan}
+              className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs text-foreground hover:bg-accent disabled:opacity-60"
+            >
+              <RefreshCw className={`h-3 w-3 ${loadingExportPlan ? 'animate-spin' : ''}`} />
+              {loadingExportPlan ? 'Loading...' : 'Refresh diff'}
+            </button>
+          </div>
+        </div>
+
+        {exportPlan && (
+          <div className="space-y-3 text-xs">
+            <p className="text-muted-foreground">Target: {exportPlan.targetPath}</p>
+            {exportPlan.warnings.map((warning) => (
+              <p key={warning} className="text-amber-300">• {warning}</p>
+            ))}
+
+            <div className="max-h-56 overflow-auto rounded-xl border border-border/70">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-secondary/40 text-muted-foreground">
+                  <tr>
+                    <th className="p-2">Export</th>
+                    <th className="p-2">Key</th>
+                    <th className="p-2">Vault</th>
+                    <th className="p-2">.env</th>
+                    <th className="p-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {exportPlan.entries.map((entry) => (
+                    <tr key={entry.key} className="border-t border-border/50">
+                      <td className="p-2 align-top">
+                        <input
+                          type="checkbox"
+                          checked={selectedExportKeys.includes(entry.key)}
+                          onChange={(e) => toggleSelectedKey(entry.key, e.target.checked)}
+                        />
+                      </td>
+                      <td className="p-2 align-top">{entry.key}</td>
+                      <td className="p-2 align-top font-mono text-[11px]">••••••••</td>
+                      <td className="p-2 align-top font-mono text-[11px]">
+                        {entry.existingValue === null ? '(missing)' : '••••••••'}
+                      </td>
+                      <td className="p-2 align-top">
+                        <span className={
+                          entry.status === 'changed'
+                            ? 'text-amber-300'
+                            : entry.status === 'new'
+                              ? 'text-emerald-300'
+                              : 'text-muted-foreground'
+                        }
+                        >
+                          {entry.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <label className="flex items-center gap-2 text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={overwriteConflicts}
+                onChange={(e) => setOverwriteConflicts(e.target.checked)}
+              />
+              Allow overwrite for keys marked as changed
+            </label>
+
+            <button
+              onClick={handleExportEnv}
+              disabled={selectedExportKeys.length === 0}
+              className="rounded-xl bg-primary px-3 py-2 text-xs text-primary-foreground disabled:opacity-60"
+            >
+              Export selected keys
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="glass rounded-[24px] border border-white/8 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-medium text-foreground">Leak risk scanner (local only)</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Scans repository files for hardcoded token patterns and possible accidental secret commits.
+            </p>
+          </div>
+          <button
+            onClick={fetchLeakRisk}
+            disabled={scanningLeakRisk}
+            className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs text-foreground hover:bg-accent disabled:opacity-60"
+          >
+            <ShieldAlert className={`h-3 w-3 ${scanningLeakRisk ? 'animate-pulse' : ''}`} />
+            {scanningLeakRisk ? 'Scanning...' : 'Scan leak risk'}
+          </button>
+        </div>
+
+        {leakReport && (
+          <div className="space-y-2 text-xs">
+            <p className="text-muted-foreground">Findings: {leakReport.findings.length}</p>
+            {leakReport.warnings.map((warning) => (
+              <p key={warning} className="text-amber-300">• {warning}</p>
+            ))}
+            {leakReport.findings.length === 0 ? (
+              <p className="text-emerald-300">No obvious leak patterns detected.</p>
+            ) : (
+              <div className="space-y-2 max-h-56 overflow-auto">
+                {leakReport.findings.map((finding, index) => (
+                  <div key={`${finding.file}-${finding.line}-${index}`} className="rounded-xl border border-destructive/30 bg-destructive/10 p-2">
+                    <p className="text-foreground">{finding.message}</p>
+                    <p className="text-muted-foreground">{finding.file}:{finding.line}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
 
       <section className="glass rounded-[24px] border border-white/8 p-4 space-y-4">
         <div className="flex items-center justify-between gap-3">
