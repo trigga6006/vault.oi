@@ -18,6 +18,28 @@ process.on('unhandledRejection', (reason) => {
 
 let mainWindow: BrowserWindow | null = null;
 
+function isTrustedNavigation(url: string): boolean {
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    return url.startsWith(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  }
+
+  return url.startsWith('file://');
+}
+
+
+const hardenedWebPreferences: Electron.WebPreferences & { enableRemoteModule?: boolean } = {
+  preload: path.join(__dirname, 'preload.js'),
+  contextIsolation: true,
+  nodeIntegration: false,
+  sandbox: true,
+  webSecurity: true,
+  nodeIntegrationInWorker: false,
+  nodeIntegrationInSubFrames: false,
+  webviewTag: false,
+  // Legacy flag kept explicit for defense-in-depth on older Electron runtimes.
+  enableRemoteModule: false,
+};
+
 function getPlatformWindowOptions(): Electron.BrowserWindowConstructorOptions {
   const base: Electron.BrowserWindowConstructorOptions = {
     width: 1400,
@@ -25,11 +47,7 @@ function getPlatformWindowOptions(): Electron.BrowserWindowConstructorOptions {
     minWidth: 900,
     minHeight: 600,
     show: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-    },
+    webPreferences: hardenedWebPreferences,
   };
 
   if (process.platform === 'win32') {
@@ -65,6 +83,7 @@ function getPlatformWindowOptions(): Electron.BrowserWindowConstructorOptions {
 function createWindow(): void {
   const options = getPlatformWindowOptions();
   mainWindow = new BrowserWindow(options);
+  mainWindow.setContentProtection(true);
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -99,6 +118,20 @@ function createWindow(): void {
   if (process.env.NODE_ENV === 'development' || MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.webContents.openDevTools({ mode: 'detach' });
   }
+
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (isTrustedNavigation(url)) {
+      return { action: 'allow' };
+    }
+
+    return { action: 'deny' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (!isTrustedNavigation(url)) {
+      event.preventDefault();
+    }
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;

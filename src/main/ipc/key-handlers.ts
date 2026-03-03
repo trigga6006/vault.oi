@@ -22,6 +22,11 @@ export function registerKeyHandlers(): void {
     await keyVaultService.deleteKey(id);
   });
 
+  registerHandler('keys:get-plaintext', async ({ id }) => {
+    const secret = await keyVaultService.getPlaintextById(id);
+    return { secret };
+  });
+
   registerHandler('keys:test', async ({ providerId, apiKey }) => {
     // Test by making a lightweight API call
     try {

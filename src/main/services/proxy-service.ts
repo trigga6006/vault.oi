@@ -500,7 +500,9 @@ export class ProxyService {
           errorCode: 'upstream_error',
           latencyMs,
           completedAt: new Date().toISOString(),
-        }).catch(() => {});
+        }).catch((error: unknown) => {
+          console.debug('[Proxy] Failed to persist upstream request error log', error);
+        });
       }
 
       emitToRenderer('proxy:request-error', { logId, providerId, model, error: err.message });

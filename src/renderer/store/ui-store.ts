@@ -5,6 +5,7 @@ export type NavView =
   | 'vault'
   | 'providers'
   | 'projects'
+  | 'credentials'
   | 'settings';
 
 interface UiState {

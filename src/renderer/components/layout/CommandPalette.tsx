@@ -6,6 +6,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Settings,
+  UserRound,
 } from 'lucide-react';
 import { useUiStore, type NavView } from '../../store/ui-store';
 
@@ -14,6 +15,7 @@ const commands: Array<{ id: NavView; label: string; icon: React.ElementType }> =
   { id: 'vault', label: 'Go to Secrets', icon: KeyRound },
   { id: 'providers', label: 'Go to Integrations', icon: Blocks },
   { id: 'projects', label: 'Go to Workspaces', icon: FolderKanban },
+  { id: 'credentials', label: 'Go to Credentials', icon: UserRound },
   { id: 'settings', label: 'Go to Settings', icon: Settings },
 ];
 

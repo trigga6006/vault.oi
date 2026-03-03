@@ -172,3 +172,16 @@ export const modelPricing = sqliteTable('model_pricing', {
   source: text('source', { enum: ['manual', 'fetched'] }).notNull().default('manual'),
   updatedAt: text('updated_at').notNull(),
 });
+
+
+export const credentials = sqliteTable('credentials', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  providerId: text('provider_id'),
+  projectId: integer('project_id').references(() => projects.id),
+  encryptedUsername: text('encrypted_username').notNull(),
+  encryptedPassword: text('encrypted_password').notNull(),
+  encryptedNotes: text('encrypted_notes'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});

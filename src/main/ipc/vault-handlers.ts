@@ -3,6 +3,7 @@ import { vaultService } from '../services/vault-service';
 import { keyVaultService } from '../services/key-vault-service';
 import { vaultExportService } from '../services/vault-export-service';
 import { providerService } from '../services/provider-service';
+import { secretsImportService } from '../services/secrets-import-service';
 
 export function registerVaultHandlers(): void {
   registerHandler('vault:status', async () => {
@@ -50,5 +51,9 @@ export function registerVaultHandlers(): void {
 
   registerHandler('vault:import', async () => {
     return vaultExportService.importVault();
+  });
+
+  registerHandler('vault:import-secrets', async () => {
+    return secretsImportService.importFromFile();
   });
 }

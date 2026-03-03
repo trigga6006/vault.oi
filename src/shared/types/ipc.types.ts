@@ -1,8 +1,9 @@
 import type { ProviderRegistrySummary, ActivatePayload, HealthCheckResult, ModelDescriptor, UsageFetchParams, UsageData, CompletionRequest, CompletionResponse } from './provider.types';
 import type { ProviderConfigRecord, AlertRuleRecord, AlertEventRecord, RequestLogRecord, ErrorRecordRow, UsageMetricRecord } from './models.types';
 import type { TokenUsage, CalculatedCost } from './pricing.types';
-import type { VaultStatus, ApiKeyMetadata, StoreKeyPayload, RotateKeyPayload, UpdateKeyPayload, TestKeyPayload, VaultInitPayload, VaultUnlockPayload, VaultChangePasswordPayload, VaultAutoLockPayload } from './vault.types';
+import type { VaultStatus, ApiKeyMetadata, StoreKeyPayload, RotateKeyPayload, UpdateKeyPayload, TestKeyPayload, VaultInitPayload, VaultUnlockPayload, VaultChangePasswordPayload, VaultAutoLockPayload, SecretsImportResult } from './vault.types';
 import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload } from './project.types';
+import type { CredentialRecord, CreateCredentialPayload, UpdateCredentialPayload } from './credentials.types';
 
 export interface MetricsQuery {
   providerId?: string;
@@ -100,6 +101,7 @@ export interface IpcChannelMap {
   'vault:set-auto-lock': { req: VaultAutoLockPayload; res: void };
   'vault:export': { req: void; res: { success: boolean } };
   'vault:import': { req: void; res: { imported: number } };
+  'vault:import-secrets': { req: void; res: SecretsImportResult };
 
   // Keys
   'keys:list': { req: void; res: ApiKeyMetadata[] };
@@ -108,6 +110,7 @@ export interface IpcChannelMap {
   'keys:rotate': { req: RotateKeyPayload; res: void };
   'keys:delete': { req: { id: number }; res: void };
   'keys:test': { req: TestKeyPayload; res: { success: boolean; message?: string } };
+  'keys:get-plaintext': { req: { id: number }; res: { secret: string } };
 
   // Projects
   'projects:list': { req: void; res: ProjectRecord[] };
@@ -119,6 +122,15 @@ export interface IpcChannelMap {
   'projects:unassign-key': { req: UnassignKeyPayload; res: void };
   'projects:get-keys': { req: { projectId: number }; res: ProjectKeyAssignment[] };
   'projects:set-active': { req: SetActiveProjectPayload; res: { projectId: number | null } };
+
+
+  // Credentials
+  'credentials:list': { req: void; res: CredentialRecord[] };
+  'credentials:create': { req: CreateCredentialPayload; res: CredentialRecord };
+  'credentials:update': { req: UpdateCredentialPayload; res: void };
+  'credentials:delete': { req: { id: number }; res: void };
+  'credentials:get-password': { req: { id: number }; res: { password: string } };
+  'credentials:generate-password': { req: { length?: number }; res: { password: string } };
 
   // Key rotation
   'keys:rotation-policies': { req: void; res: Array<{ id: number; projectId: number | null; providerId: string; rotationIntervalDays: number; reminderDaysBefore: number; enabled: boolean }> };
@@ -132,3 +144,5 @@ export interface IpcChannelMap {
 }
 
 export type IpcChannel = keyof IpcChannelMap;
+
+export type IpcEventChannel = 'vault:locked' | 'key:rotation-reminder';
