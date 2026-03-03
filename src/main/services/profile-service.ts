@@ -14,6 +14,8 @@ interface ProfileStorage {
   profiles: VaultProfile[];
 }
 
+const PROFILE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 function slugifyProfileId(name: string): string {
   return name
     .trim()
@@ -21,6 +23,23 @@ function slugifyProfileId(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 40);
+}
+
+function isValidProfileId(profileId: string): boolean {
+  return PROFILE_ID_PATTERN.test(profileId);
+}
+
+function createInitialState(): ProfileStorage {
+  return {
+    activeProfileId: DEFAULT_PROFILE_ID,
+    profiles: [
+      {
+        id: DEFAULT_PROFILE_ID,
+        name: DEFAULT_PROFILE_NAME,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+  };
 }
 
 export class ProfileService {
@@ -129,23 +148,42 @@ export class ProfileService {
     try {
       const content = await fs.readFile(this.storagePath, 'utf8');
       const parsed = JSON.parse(content) as ProfileStorage;
+
       if (!Array.isArray(parsed.profiles) || parsed.profiles.length === 0) {
         throw new Error('Invalid profile state');
       }
-      return parsed;
-    } catch {
-      const initial: ProfileStorage = {
-        activeProfileId: DEFAULT_PROFILE_ID,
-        profiles: [
-          {
-            id: DEFAULT_PROFILE_ID,
-            name: DEFAULT_PROFILE_NAME,
-            createdAt: new Date().toISOString(),
-          },
-        ],
-      };
-      await this.saveState(initial);
-      return initial;
+
+      const uniqueProfiles = new Map<string, VaultProfile>();
+      for (const profile of parsed.profiles) {
+        if (!profile || typeof profile.id !== 'string' || !isValidProfileId(profile.id)) continue;
+        if (typeof profile.name !== 'string' || !profile.name.trim()) continue;
+        if (uniqueProfiles.has(profile.id)) continue;
+
+        uniqueProfiles.set(profile.id, {
+          id: profile.id,
+          name: profile.name.trim(),
+          createdAt: profile.createdAt || new Date().toISOString(),
+        });
+      }
+
+      if (uniqueProfiles.size === 0) {
+        throw new Error('Invalid profile state');
+      }
+
+      const profiles = Array.from(uniqueProfiles.values());
+      const hasActiveProfile =
+        typeof parsed.activeProfileId === 'string' && profiles.some((profile) => profile.id === parsed.activeProfileId);
+      const activeProfileId = hasActiveProfile ? parsed.activeProfileId : profiles[0].id;
+
+      return { activeProfileId, profiles };
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+        const initial = createInitialState();
+        await this.saveState(initial);
+        return initial;
+      }
+
+      throw error;
     }
   }
 
