@@ -1,0 +1,63 @@
+[
+  {
+    "modelId": "gpt-4o",
+    "modelPattern": "gpt-4o*",
+    "inputPricePerMTok": 2.50,
+    "outputPricePerMTok": 10.0,
+    "cachedInputPricePerMTok": 1.25,
+    "effectiveFrom": "2024-11-01"
+  },
+  {
+    "modelId": "gpt-4o-mini",
+    "modelPattern": "gpt-4o-mini*",
+    "inputPricePerMTok": 0.15,
+    "outputPricePerMTok": 0.60,
+    "cachedInputPricePerMTok": 0.075,
+    "effectiveFrom": "2024-07-01"
+  },
+  {
+    "modelId": "gpt-4-turbo",
+    "modelPattern": "gpt-4-turbo*",
+    "inputPricePerMTok": 10.0,
+    "outputPricePerMTok": 30.0,
+    "effectiveFrom": "2024-04-01"
+  },
+  {
+    "modelId": "gpt-4",
+    "modelPattern": "gpt-4",
+    "inputPricePerMTok": 30.0,
+    "outputPricePerMTok": 60.0,
+    "effectiveFrom": "2023-03-01"
+  },
+  {
+    "modelId": "gpt-3.5-turbo",
+    "modelPattern": "gpt-3.5-turbo*",
+    "inputPricePerMTok": 0.50,
+    "outputPricePerMTok": 1.50,
+    "effectiveFrom": "2024-01-25"
+  },
+  {
+    "modelId": "o1",
+    "modelPattern": "o1*",
+    "inputPricePerMTok": 15.0,
+    "outputPricePerMTok": 60.0,
+    "cachedInputPricePerMTok": 7.50,
+    "effectiveFrom": "2024-12-01"
+  },
+  {
+    "modelId": "o1-mini",
+    "modelPattern": "o1-mini*",
+    "inputPricePerMTok": 3.0,
+    "outputPricePerMTok": 12.0,
+    "cachedInputPricePerMTok": 1.50,
+    "effectiveFrom": "2024-09-01"
+  },
+  {
+    "modelId": "o3-mini",
+    "modelPattern": "o3-mini*",
+    "inputPricePerMTok": 1.10,
+    "outputPricePerMTok": 4.40,
+    "cachedInputPricePerMTok": 0.55,
+    "effectiveFrom": "2025-01-31"
+  }
+]

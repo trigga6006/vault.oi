@@ -1,0 +1,26 @@
+[
+  {
+    "modelId": "mistral-large-latest",
+    "inputPricePerMTok": 2.0,
+    "outputPricePerMTok": 6.0,
+    "effectiveFrom": "2024-02-01"
+  },
+  {
+    "modelId": "mistral-medium-latest",
+    "inputPricePerMTok": 2.7,
+    "outputPricePerMTok": 8.1,
+    "effectiveFrom": "2024-01-01"
+  },
+  {
+    "modelId": "mistral-small-latest",
+    "inputPricePerMTok": 0.2,
+    "outputPricePerMTok": 0.6,
+    "effectiveFrom": "2024-02-01"
+  },
+  {
+    "modelId": "codestral-latest",
+    "inputPricePerMTok": 0.3,
+    "outputPricePerMTok": 0.9,
+    "effectiveFrom": "2024-05-01"
+  }
+]

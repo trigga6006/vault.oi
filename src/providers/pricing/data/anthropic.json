@@ -1,0 +1,50 @@
+[
+  {
+    "modelId": "claude-opus-4-6",
+    "modelPattern": "claude-opus-4*",
+    "inputPricePerMTok": 15.0,
+    "outputPricePerMTok": 75.0,
+    "cachedInputPricePerMTok": 1.875,
+    "effectiveFrom": "2025-09-01"
+  },
+  {
+    "modelId": "claude-sonnet-4-6",
+    "modelPattern": "claude-sonnet-4*",
+    "inputPricePerMTok": 3.0,
+    "outputPricePerMTok": 15.0,
+    "cachedInputPricePerMTok": 0.375,
+    "effectiveFrom": "2025-09-01"
+  },
+  {
+    "modelId": "claude-haiku-4-5-20251001",
+    "modelPattern": "claude-haiku-4*",
+    "inputPricePerMTok": 0.80,
+    "outputPricePerMTok": 4.0,
+    "cachedInputPricePerMTok": 0.08,
+    "effectiveFrom": "2025-10-01"
+  },
+  {
+    "modelId": "claude-3-5-sonnet-20241022",
+    "modelPattern": "claude-3-5-sonnet*",
+    "inputPricePerMTok": 3.0,
+    "outputPricePerMTok": 15.0,
+    "cachedInputPricePerMTok": 0.375,
+    "effectiveFrom": "2024-10-22"
+  },
+  {
+    "modelId": "claude-3-5-haiku-20241022",
+    "modelPattern": "claude-3-5-haiku*",
+    "inputPricePerMTok": 0.80,
+    "outputPricePerMTok": 4.0,
+    "cachedInputPricePerMTok": 0.08,
+    "effectiveFrom": "2024-10-22"
+  },
+  {
+    "modelId": "claude-3-opus-20240229",
+    "modelPattern": "claude-3-opus*",
+    "inputPricePerMTok": 15.0,
+    "outputPricePerMTok": 75.0,
+    "cachedInputPricePerMTok": 1.875,
+    "effectiveFrom": "2024-02-29"
+  }
+]

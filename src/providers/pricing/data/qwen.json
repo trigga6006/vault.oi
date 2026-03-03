@@ -1,0 +1,5 @@
+[
+  { "modelId": "qwen-max", "inputPricePerMTok": 2.40, "outputPricePerMTok": 9.60, "effectiveFrom": "2024-09-01" },
+  { "modelId": "qwen-plus", "inputPricePerMTok": 0.80, "outputPricePerMTok": 2.00, "effectiveFrom": "2024-09-01" },
+  { "modelId": "qwen-turbo", "inputPricePerMTok": 0.30, "outputPricePerMTok": 0.60, "effectiveFrom": "2024-09-01" }
+]

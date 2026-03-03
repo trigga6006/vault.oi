@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  --color-background: oklch(0.105 0.004 260);
+  --color-foreground: oklch(0.982 0.002 260);
+  --color-card: oklch(0.145 0.006 260);
+  --color-card-foreground: oklch(0.982 0.002 260);
+  --color-popover: oklch(0.145 0.006 260);
+  --color-popover-foreground: oklch(0.982 0.002 260);
+  --color-primary: oklch(0.94 0.007 255);
+  --color-primary-foreground: oklch(0.12 0.004 260);
+  --color-secondary: oklch(0.18 0.006 260);
+  --color-secondary-foreground: oklch(0.982 0.002 260);
+  --color-muted: oklch(0.18 0.006 260);
+  --color-muted-foreground: oklch(0.67 0.01 260);
+  --color-accent: oklch(0.22 0.008 260);
+  --color-accent-foreground: oklch(0.982 0.002 260);
+  --color-destructive: oklch(0.55 0.2 25);
+  --color-destructive-foreground: oklch(0.985 0 0);
+  --color-border: oklch(0.24 0.008 260);
+  --color-input: oklch(0.24 0.008 260);
+  --color-ring: oklch(0.78 0.01 255);
+  --color-sidebar: oklch(0.095 0.004 260);
+  --color-sidebar-foreground: oklch(0.982 0.002 260);
+  --color-sidebar-border: oklch(0.19 0.008 260);
+
+  --color-anthropic: oklch(0.7 0.15 40);
+  --color-openai: oklch(0.75 0.15 155);
+  --color-google: oklch(0.7 0.15 250);
+  --color-xai: oklch(0.8 0 0);
+
+  --radius: 0.625rem;
+}
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --color-background: oklch(0.972 0.004 255);
+  --color-foreground: oklch(0.21 0.008 255);
+  --color-card: oklch(0.992 0.002 255);
+  --color-card-foreground: oklch(0.21 0.008 255);
+  --color-popover: oklch(0.992 0.002 255);
+  --color-popover-foreground: oklch(0.21 0.008 255);
+  --color-primary: oklch(0.15 0.01 255);
+  --color-primary-foreground: oklch(0.985 0.002 255);
+  --color-secondary: oklch(0.94 0.004 255);
+  --color-secondary-foreground: oklch(0.21 0.008 255);
+  --color-muted: oklch(0.94 0.004 255);
+  --color-muted-foreground: oklch(0.52 0.01 255);
+  --color-accent: oklch(0.91 0.006 255);
+  --color-accent-foreground: oklch(0.21 0.008 255);
+  --color-border: oklch(0.87 0.006 255);
+  --color-input: oklch(0.87 0.006 255);
+  --color-ring: oklch(0.58 0.02 255);
+  --color-sidebar: oklch(0.955 0.004 255);
+  --color-sidebar-foreground: oklch(0.21 0.008 255);
+  --color-sidebar-border: oklch(0.88 0.006 255);
+}
+
+@utility glass {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-card) 92%, transparent),
+    color-mix(in oklab, var(--color-card) 82%, transparent)
+  );
+  backdrop-filter: blur(18px) saturate(125%);
+  border: 1px solid color-mix(in oklab, var(--color-border) 92%, transparent);
+}
+
+@utility glass-strong {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-card) 96%, transparent),
+    color-mix(in oklab, var(--color-card) 88%, transparent)
+  );
+  backdrop-filter: blur(28px) saturate(120%);
+  border: 1px solid color-mix(in oklab, var(--color-border) 96%, transparent);
+}
+
+@utility glass-subtle {
+  background: color-mix(in oklab, var(--color-card) 72%, transparent);
+  backdrop-filter: blur(10px) saturate(118%);
+  border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+}
+
+@utility drag-region {
+  -webkit-app-region: drag;
+}
+
+@utility no-drag {
+  -webkit-app-region: no-drag;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-muted-foreground) 45%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in oklab, var(--color-muted-foreground) 45%, transparent);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--color-muted-foreground) 60%, transparent);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-primary) 20%, transparent);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  overflow: hidden;
+  user-select: none;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 31px,
+      rgba(255, 255, 255, 0.018) 32px
+    ),
+    linear-gradient(180deg, #0c0d10 0%, #090a0c 100%);
+}
+
+[data-theme='light'] body {
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0,
+      transparent 31px,
+      rgba(16, 24, 40, 0.022) 32px
+    ),
+    linear-gradient(180deg, #f4f6f8 0%, #eef2f5 100%);
+}

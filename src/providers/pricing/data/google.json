@@ -1,0 +1,26 @@
+[
+  {
+    "modelId": "gemini-2.0-flash",
+    "inputPricePerMTok": 0.10,
+    "outputPricePerMTok": 0.40,
+    "effectiveFrom": "2025-02-01"
+  },
+  {
+    "modelId": "gemini-2.0-flash-lite",
+    "inputPricePerMTok": 0.075,
+    "outputPricePerMTok": 0.30,
+    "effectiveFrom": "2025-02-01"
+  },
+  {
+    "modelId": "gemini-1.5-pro",
+    "inputPricePerMTok": 1.25,
+    "outputPricePerMTok": 5.00,
+    "effectiveFrom": "2024-05-01"
+  },
+  {
+    "modelId": "gemini-1.5-flash",
+    "inputPricePerMTok": 0.075,
+    "outputPricePerMTok": 0.30,
+    "effectiveFrom": "2024-05-01"
+  }
+]

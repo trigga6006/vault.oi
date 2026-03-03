@@ -1,0 +1,20 @@
+[
+  {
+    "modelId": "grok-3",
+    "inputPricePerMTok": 3.0,
+    "outputPricePerMTok": 15.0,
+    "effectiveFrom": "2025-02-01"
+  },
+  {
+    "modelId": "grok-3-mini",
+    "inputPricePerMTok": 0.30,
+    "outputPricePerMTok": 0.50,
+    "effectiveFrom": "2025-02-01"
+  },
+  {
+    "modelId": "grok-2",
+    "inputPricePerMTok": 2.0,
+    "outputPricePerMTok": 10.0,
+    "effectiveFrom": "2024-08-01"
+  }
+]

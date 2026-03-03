@@ -1,0 +1,6 @@
+[
+  { "modelId": "command-r-plus", "inputPricePerMTok": 2.50, "outputPricePerMTok": 10.00, "effectiveFrom": "2024-04-01" },
+  { "modelId": "command-r", "inputPricePerMTok": 0.15, "outputPricePerMTok": 0.60, "effectiveFrom": "2024-03-01" },
+  { "modelId": "command", "inputPricePerMTok": 1.00, "outputPricePerMTok": 2.00, "effectiveFrom": "2024-01-01" },
+  { "modelId": "command-light", "inputPricePerMTok": 0.30, "outputPricePerMTok": 0.60, "effectiveFrom": "2024-01-01" }
+]

@@ -1,0 +1,26 @@
+[
+  {
+    "modelId": "sonar-pro",
+    "inputPricePerMTok": 3.0,
+    "outputPricePerMTok": 15.0,
+    "effectiveFrom": "2025-01-01"
+  },
+  {
+    "modelId": "sonar",
+    "inputPricePerMTok": 1.0,
+    "outputPricePerMTok": 1.0,
+    "effectiveFrom": "2025-01-01"
+  },
+  {
+    "modelId": "sonar-reasoning-pro",
+    "inputPricePerMTok": 2.0,
+    "outputPricePerMTok": 8.0,
+    "effectiveFrom": "2025-01-01"
+  },
+  {
+    "modelId": "sonar-reasoning",
+    "inputPricePerMTok": 1.0,
+    "outputPricePerMTok": 5.0,
+    "effectiveFrom": "2025-01-01"
+  }
+]

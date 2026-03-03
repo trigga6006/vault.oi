@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:bundlephobia.com)",
+      "Bash(npx create-electron-app@latest:*)",
+      "Bash(npm install:*)",
+      "Bash(mkdir:*)",
+      "Bash(rm:*)",
+      "Bash(npm start:*)",
+      "Bash(npm show:*)",
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 npx electron-forge:*)",
+      "Bash(node:*)",
+      "Bash(taskkill:*)",
+      "Bash(tasklist:*)",
+      "Bash(ls:*)",
+      "Bash(netstat:*)",
+      "Bash(node_modules/electron/dist/electron.exe:*)",
+      "Bash(node_modules/electron/dist/electron.exe .:*)",
+      "Bash(npx vite:*)",
+      "Bash(xargs cat:*)",
+      "Bash(npm run:*)",
+      "Bash(wc:*)",
+      "Bash(npx electron-forge:*)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 npx electron:*)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 ELECTRON_LOG_ASAR_READS=1 node_modules/.bin/electron .:*)",
+      "Bash(ELECTRON_ENABLE_LOGGING=1 ./node_modules/.bin/electron .:*)"
+    ]
+  }
+}

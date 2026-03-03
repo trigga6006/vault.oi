@@ -1,0 +1,26 @@
+[
+  {
+    "modelId": "accounts/fireworks/models/llama-v3p1-405b-instruct",
+    "inputPricePerMTok": 3.0,
+    "outputPricePerMTok": 3.0,
+    "effectiveFrom": "2024-07-01"
+  },
+  {
+    "modelId": "accounts/fireworks/models/llama-v3p1-70b-instruct",
+    "inputPricePerMTok": 0.9,
+    "outputPricePerMTok": 0.9,
+    "effectiveFrom": "2024-07-01"
+  },
+  {
+    "modelId": "accounts/fireworks/models/mixtral-8x22b-instruct",
+    "inputPricePerMTok": 0.9,
+    "outputPricePerMTok": 0.9,
+    "effectiveFrom": "2024-03-01"
+  },
+  {
+    "modelId": "accounts/fireworks/models/heretic-l3.1-70b",
+    "inputPricePerMTok": 0.9,
+    "outputPricePerMTok": 0.9,
+    "effectiveFrom": "2024-09-01"
+  }
+]

@@ -1,0 +1,20 @@
+[
+  {
+    "modelId": "meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
+    "inputPricePerMTok": 3.5,
+    "outputPricePerMTok": 3.5,
+    "effectiveFrom": "2024-07-01"
+  },
+  {
+    "modelId": "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+    "inputPricePerMTok": 0.88,
+    "outputPricePerMTok": 0.88,
+    "effectiveFrom": "2024-07-01"
+  },
+  {
+    "modelId": "mistralai/Mixtral-8x22B-Instruct-v0.1",
+    "inputPricePerMTok": 1.2,
+    "outputPricePerMTok": 1.2,
+    "effectiveFrom": "2024-04-01"
+  }
+]

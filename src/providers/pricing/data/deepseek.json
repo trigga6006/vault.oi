@@ -1,0 +1,5 @@
+[
+  { "modelId": "deepseek-chat", "inputPricePerMTok": 0.14, "outputPricePerMTok": 0.28, "effectiveFrom": "2025-01-01" },
+  { "modelId": "deepseek-reasoner", "inputPricePerMTok": 0.55, "outputPricePerMTok": 2.19, "effectiveFrom": "2025-01-01" },
+  { "modelId": "deepseek-coder", "inputPricePerMTok": 0.14, "outputPricePerMTok": 0.28, "effectiveFrom": "2024-06-01" }
+]
