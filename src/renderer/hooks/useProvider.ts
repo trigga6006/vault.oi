@@ -1,15 +1,6 @@
 import { useCallback } from 'react';
 import { useProviderStore } from '../store/provider-store';
 
-declare global {
-  interface Window {
-    omniview: {
-      invoke: (channel: string, payload?: unknown) => Promise<unknown>;
-      on: (channel: string, callback: (...args: unknown[]) => void) => () => void;
-      platform: NodeJS.Platform;
-    };
-  }
-}
 
 export function useProvider() {
   const { registeredProviders, providerConfigs, healthChecks, loading, setRegisteredProviders, setProviderConfigs, setHealthCheck, setLoading } = useProviderStore();

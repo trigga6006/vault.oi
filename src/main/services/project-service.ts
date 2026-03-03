@@ -23,7 +23,9 @@ export class ProjectService {
         const keyRow = await apiKeyRepo.getById(assignment.apiKeyId);
         if (keyRow && keyRow.isActive) {
           const key = vaultService.decrypt(keyRow.encryptedKey);
-          apiKeyRepo.updateLastUsed(keyRow.id).catch(() => {});
+          apiKeyRepo.updateLastUsed(keyRow.id).catch((error: unknown) => {
+            console.debug('[ProjectService] Failed to update key usage timestamp', error);
+          });
           return { key, keyId: keyRow.id };
         }
       }
@@ -33,7 +35,9 @@ export class ProjectService {
     const globalKey = await apiKeyRepo.getActiveForProvider(providerId);
     if (globalKey) {
       const key = vaultService.decrypt(globalKey.encryptedKey);
-      apiKeyRepo.updateLastUsed(globalKey.id).catch(() => {});
+      apiKeyRepo.updateLastUsed(globalKey.id).catch((error: unknown) => {
+        console.debug('[ProjectService] Failed to update global key usage timestamp', error);
+      });
       return { key, keyId: globalKey.id };
     }
 

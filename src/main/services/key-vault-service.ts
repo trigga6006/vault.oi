@@ -36,8 +36,20 @@ export class KeyVaultService {
 
     const key = vaultService.decrypt(row.encryptedKey);
     // Update last used timestamp asynchronously
-    apiKeyRepo.updateLastUsed(row.id).catch(() => {});
+    apiKeyRepo.updateLastUsed(row.id).catch((error: unknown) => {
+      console.debug('[KeyVault] Failed to update last-used timestamp', error);
+    });
     return { key, keyId: row.id };
+  }
+
+
+  async getPlaintextById(id: number): Promise<string> {
+    const row = await apiKeyRepo.getById(id);
+    if (!row) {
+      throw new Error('Secret not found');
+    }
+
+    return vaultService.decrypt(row.encryptedKey);
   }
 
   /** Rotate a key — store new encrypted key, update timestamp */

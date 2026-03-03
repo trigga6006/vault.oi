@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Key, RotateCcw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Eye, Key, RotateCcw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { cn } from '../ui/cn';
 import { ProviderLogo } from '../providers/ProviderLogo';
 import type { ApiKeyMetadata } from '../../../shared/types/vault.types';
@@ -7,12 +7,13 @@ import type { ApiKeyMetadata } from '../../../shared/types/vault.types';
 interface KeyCardProps {
   keyData: ApiKeyMetadata;
   providerName: string;
+  onReveal: (id: number) => void;
   onRotate: (id: number) => void;
   onDelete: (id: number) => void;
   onToggleActive: (id: number, isActive: boolean) => void;
 }
 
-export function KeyCard({ keyData, providerName, onRotate, onDelete, onToggleActive }: KeyCardProps) {
+export function KeyCard({ keyData, providerName, onReveal, onRotate, onDelete, onToggleActive }: KeyCardProps) {
   const age = keyData.createdAt
     ? formatAge(new Date(keyData.createdAt))
     : 'Unknown';
@@ -51,6 +52,13 @@ export function KeyCard({ keyData, providerName, onRotate, onDelete, onToggleAct
         </div>
 
         <div className="flex items-center gap-1">
+          <button
+            onClick={() => onReveal(keyData.id)}
+            className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            title="Reveal secret"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
           <button
             onClick={() => onToggleActive(keyData.id, !keyData.isActive)}
             className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"

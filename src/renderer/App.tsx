@@ -6,6 +6,7 @@ import { KeyVault } from './components/vault/KeyVault';
 import { VaultSetup } from './components/vault/VaultSetup';
 import { VaultUnlock } from './components/vault/VaultUnlock';
 import { ProjectsView } from './components/projects/ProjectsView';
+import { CredentialsView } from './components/credentials/CredentialsView';
 import { useUiStore } from './store/ui-store';
 import { useVault } from './hooks/useVault';
 
@@ -21,6 +22,8 @@ function ViewRouter() {
       return <KeyVault />;
     case 'projects':
       return <ProjectsView />;
+    case 'credentials':
+      return <CredentialsView />;
     case 'settings':
       return <SettingsView />;
     default:

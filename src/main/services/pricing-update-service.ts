@@ -20,7 +20,9 @@ export class PricingUpdateService {
     // Check daily
     this.timer = setInterval(() => {
       if (this.autoUpdateEnabled) {
-        this.checkForUpdates().catch(() => {});
+        this.checkForUpdates().catch((error: unknown) => {
+          console.warn('[PricingUpdate] Scheduled check failed:', error);
+        });
       }
     }, 24 * 60 * 60 * 1000);
   }

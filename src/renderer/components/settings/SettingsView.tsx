@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Download,
+  FileUp,
   KeyRound,
   Loader2,
   ShieldCheck,
@@ -17,6 +18,7 @@ export function SettingsView() {
   const [savingAutoLock, setSavingAutoLock] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [importingSecrets, setImportingSecrets] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
@@ -54,6 +56,28 @@ export function SettingsView() {
       toast.error('Export failed');
     } finally {
       setExporting(false);
+    }
+  }
+
+
+  async function handleImportSecrets() {
+    setImportingSecrets(true);
+    try {
+      const result = await window.omniview.invoke('vault:import-secrets', undefined) as {
+        imported: number;
+        skipped: number;
+        source: '.env' | 'csv' | 'json';
+      };
+
+      if (result.imported > 0) {
+        toast.success(`Imported ${result.imported} secret${result.imported === 1 ? '' : 's'} from ${result.source}`);
+      } else if (result.skipped > 0) {
+        toast.warning('No supported secrets were imported from the selected file');
+      }
+    } catch {
+      toast.error('Secrets import failed');
+    } finally {
+      setImportingSecrets(false);
     }
   }
 
@@ -192,6 +216,25 @@ export function SettingsView() {
               Export encrypted vault
             </button>
           </div>
+
+          <div className="mt-8 border-t border-white/8 pt-5">
+            <div className="flex items-center gap-2">
+              <FileUp className="h-4 w-4 text-foreground" />
+              <h3 className="text-sm font-medium text-foreground">Import secrets</h3>
+            </div>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              Import provider keys from <code>.env</code> or CSV exports and store them encrypted in your local vault.
+            </p>
+            <button
+              onClick={handleImportSecrets}
+              disabled={importingSecrets}
+              className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.08] disabled:opacity-50"
+            >
+              {importingSecrets && <Loader2 className="h-4 w-4 animate-spin" />}
+              Import .env / CSV
+            </button>
+          </div>
+
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import {
   Blocks,
   Settings,
   Shield,
+  UserRound,
 } from 'lucide-react';
 import { useUiStore, type NavView } from '../../store/ui-store';
 import { cn } from '../ui/cn';
@@ -23,6 +24,7 @@ const navItems: NavItem[] = [
   { id: 'vault', label: 'Secrets', icon: KeyRound },
   { id: 'providers', label: 'Integrations', icon: Blocks },
   { id: 'projects', label: 'Workspaces', icon: FolderKanban },
+  { id: 'credentials', label: 'Credentials', icon: UserRound },
 ];
 
 const bottomItems: NavItem[] = [{ id: 'settings', label: 'Settings', icon: Settings }];

@@ -191,6 +191,18 @@ export function initializeDatabase() {
       UNIQUE(project_id, api_key_id, environment)
     );
 
+    CREATE TABLE IF NOT EXISTS credentials (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      provider_id TEXT,
+      project_id INTEGER REFERENCES projects(id),
+      encrypted_username TEXT NOT NULL,
+      encrypted_password TEXT NOT NULL,
+      encrypted_notes TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS key_rotation_policies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       project_id INTEGER REFERENCES projects(id),

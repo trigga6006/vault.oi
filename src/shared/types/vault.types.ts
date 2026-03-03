@@ -57,3 +57,9 @@ export interface VaultChangePasswordPayload {
 export interface VaultAutoLockPayload {
   minutes: number;
 }
+
+export interface SecretsImportResult {
+  imported: number;
+  skipped: number;
+  source: '.env' | 'csv' | 'json';
+}
