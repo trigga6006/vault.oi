@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FolderKanban, Plus, Pencil, Trash2 } from 'lucide-react';
+import { FileUp, FolderKanban, Plus, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ProjectForm } from './ProjectForm';
 import { ProjectDetail } from './ProjectDetail';
+import { ProjectEnvImportDialog } from './ProjectEnvImportDialog';
 import { useProjectStore } from '../../store/project-store';
 import type { ProjectRecord } from '../../../shared/types/project.types';
 
 export function ProjectsView() {
   const { projects, setProjects } = useProjectStore();
   const [showForm, setShowForm] = useState(false);
+  const [showEnvImport, setShowEnvImport] = useState(false);
   const [editProject, setEditProject] = useState<ProjectRecord | null>(null);
   const [detailProject, setDetailProject] = useState<ProjectRecord | null>(null);
 
@@ -65,6 +67,34 @@ export function ProjectsView() {
     await fetchProjects();
   }
 
+  async function pickEnvFile() {
+    const result = await window.omniview.invoke('projects:pick-env-file', undefined) as { path: string | null };
+    return result.path;
+  }
+
+  async function handleCreateFromEnv(data: {
+    name: string;
+    description: string;
+    color: string;
+    gitRepoPath: string;
+    envFilePath: string;
+    environment: 'dev' | 'staging' | 'prod';
+  }) {
+    const result = await window.omniview.invoke('projects:create-from-env', {
+      name: data.name,
+      description: data.description || undefined,
+      color: data.color,
+      gitRepoPath: data.gitRepoPath || undefined,
+      envFilePath: data.envFilePath,
+      environment: data.environment,
+    });
+    toast.success(
+      `Workspace created. Imported ${result.imported + result.updated} value${result.imported + result.updated === 1 ? '' : 's'} and assigned ${result.assigned}.`,
+    );
+    setShowEnvImport(false);
+    await fetchProjects();
+  }
+
   async function handleDelete(id: number) {
     try {
       await window.omniview.invoke('projects:delete', { id });
@@ -103,16 +133,33 @@ export function ProjectsView() {
             cleanly across dev, staging, and prod.
           </p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/92"
-        >
-          <Plus className="h-4 w-4" />
-          New Workspace
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowEnvImport(true)}
+            className="flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.08]"
+          >
+            <FileUp className="h-4 w-4" />
+            Create From .env
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/92"
+          >
+            <Plus className="h-4 w-4" />
+            New Workspace
+          </button>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
+        {showEnvImport && (
+          <ProjectEnvImportDialog
+            mode="create"
+            onCancel={() => setShowEnvImport(false)}
+            onPickFile={pickEnvFile}
+            onCreate={handleCreateFromEnv}
+          />
+        )}
         {showForm && (
           <ProjectForm onSave={handleCreate} onCancel={() => setShowForm(false)} />
         )}
@@ -136,6 +183,13 @@ export function ProjectsView() {
               Create a workspace to assign secrets by repo and environment
             </p>
           </div>
+          <button
+            onClick={() => setShowEnvImport(true)}
+            className="flex items-center gap-2 rounded-lg border border-white/8 bg-white/[0.04] px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-white/[0.08]"
+          >
+            <FileUp className="h-4 w-4" />
+            Create From .env
+          </button>
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 rounded-lg bg-primary/20 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/30 transition-colors"

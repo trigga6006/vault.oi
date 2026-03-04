@@ -9,9 +9,13 @@ export function Header() {
   const { toggleCommandPalette, theme, setTheme } = useUiStore();
   const { status } = useProxy();
   const { lockVault } = useVault();
+  const windowControlsInset = window.omniview.platform === 'win32' ? 144 : 0;
 
   return (
-    <header className="drag-region flex h-14 items-center justify-between border-b border-border bg-background/88 px-4 backdrop-blur-xl">
+    <header
+      className="drag-region relative z-30 flex h-14 items-center justify-between border-b border-border bg-background/88 px-4 backdrop-blur-xl"
+      style={{ paddingRight: `calc(1rem + ${windowControlsInset}px)` }}
+    >
       <div className="flex w-40 items-center">
         <div className="no-drag flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
           <span

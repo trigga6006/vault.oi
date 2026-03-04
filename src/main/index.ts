@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from 'electron';
+import { app, BrowserWindow, dialog, session } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 
@@ -6,7 +6,6 @@ if (started) {
   app.quit();
 }
 
-// Catch uncaught errors so we can see them
 process.on('uncaughtException', (error) => {
   console.error('[FATAL] Uncaught exception:', error);
   dialog.showErrorBox('OmniView Error', error.stack ?? error.message);
@@ -26,7 +25,6 @@ function isTrustedNavigation(url: string): boolean {
   return url.startsWith('file://');
 }
 
-
 const hardenedWebPreferences: Electron.WebPreferences & { enableRemoteModule?: boolean } = {
   preload: path.join(__dirname, 'preload.js'),
   contextIsolation: true,
@@ -36,7 +34,6 @@ const hardenedWebPreferences: Electron.WebPreferences & { enableRemoteModule?: b
   nodeIntegrationInWorker: false,
   nodeIntegrationInSubFrames: false,
   webviewTag: false,
-  // Legacy flag kept explicit for defense-in-depth on older Electron runtimes.
   enableRemoteModule: false,
 };
 
@@ -93,26 +90,10 @@ function createWindow(): void {
     );
   }
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow?.show();
-  });
+  mainWindow.once('ready-to-show', () => mainWindow?.show());
 
-  // Show window after timeout even if ready-to-show doesn't fire (renderer error)
-  setTimeout(() => {
-    if (mainWindow && !mainWindow.isVisible()) {
-      console.warn('[Main] Window not visible after 5s, forcing show');
-      mainWindow.show();
-    }
-  }, 5000);
-
-  // Log renderer errors
   mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
     console.error('[Main] Renderer failed to load:', errorCode, errorDescription);
-  });
-
-  mainWindow.webContents.on('console-message', (_event, level, message) => {
-    const levels = ['verbose', 'info', 'warning', 'error'];
-    console.log(`[Renderer:${levels[level] ?? level}] ${message}`);
   });
 
   if (process.env.NODE_ENV === 'development' || MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -138,11 +119,7 @@ function createWindow(): void {
   });
 }
 
-app.on('ready', async () => {
-  // Create window FIRST so user sees something
-  createWindow();
-
-  // Then initialize backend services
+async function initializeBackendServices(): Promise<void> {
   try {
     const { profileService } = await import('./services/profile-service');
     const state = await profileService.initialize();
@@ -238,6 +215,27 @@ app.on('ready', async () => {
   } catch (err) {
     console.error('[Main] Pricing update service start failed:', err);
   }
+}
+
+app.on('ready', async () => {
+  // Enforce CSP via response headers (not HTML meta tag) so we can
+  // loosen script-src in development for Vite's inline React-refresh preamble.
+  const isDev = !!MAIN_WINDOW_VITE_DEV_SERVER_URL;
+  const csp = isDev
+    ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: ws: wss:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+    : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'";
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [csp],
+      },
+    });
+  });
+
+  await initializeBackendServices();
+  createWindow();
 
   console.log('[Main] Startup complete');
 });

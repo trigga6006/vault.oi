@@ -283,11 +283,17 @@ export function initializeDatabase() {
   if (!keyColumnNames.includes('last_verified_at')) {
     raw.exec(`ALTER TABLE api_keys ADD COLUMN last_verified_at TEXT`);
   }
+  if (!keyColumnNames.includes('expires_at')) {
+    raw.exec(`ALTER TABLE api_keys ADD COLUMN expires_at TEXT`);
+  }
   if (!keyColumnNames.includes('service_type')) {
     raw.exec(`ALTER TABLE api_keys ADD COLUMN service_type TEXT`);
   }
   if (!keyColumnNames.includes('generated_where')) {
     raw.exec(`ALTER TABLE api_keys ADD COLUMN generated_where TEXT`);
+  }
+  if (!keyColumnNames.includes('notes')) {
+    raw.exec(`ALTER TABLE api_keys ADD COLUMN notes TEXT`);
   }
 
   const metricsColumns = raw.pragma('table_info(usage_metrics)') as Array<{ name: string }>;

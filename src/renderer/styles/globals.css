@@ -161,6 +161,27 @@
   background-color: color-mix(in oklab, var(--color-muted-foreground) 60%, transparent);
 }
 
+/* ─── Light mode: invert hardcoded white-opacity patterns ─────────────────────
+   Components use border-white/8, bg-white/[0.04], divide-white/8 etc.
+   which are invisible on a light background. Override with black-opacity
+   equivalents under [data-theme='light'] without touching every component.
+   ───────────────────────────────────────────────────────────────────────────── */
+[data-theme='light'] .border-white\/8 {
+  border-color: oklch(0 0 0 / 0.1);
+}
+[data-theme='light'] .divide-white\/8 > * + * {
+  border-color: oklch(0 0 0 / 0.1);
+}
+[data-theme='light'] .bg-white\/\[0\.04\] {
+  background-color: oklch(0 0 0 / 0.04);
+}
+[data-theme='light'] .hover\:bg-white\/\[0\.08\]:hover {
+  background-color: oklch(0 0 0 / 0.07);
+}
+[data-theme='light'] .bg-white\/\[0\.08\] {
+  background-color: oklch(0 0 0 / 0.06);
+}
+
 ::selection {
   background: color-mix(in oklab, var(--color-primary) 20%, transparent);
 }

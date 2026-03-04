@@ -19,59 +19,60 @@ export function ProviderCard({ config, health, onConfigure, onRemove, onHealthCh
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className="glass rounded-[24px] border border-white/8 p-5 space-y-4"
+      className="glass rounded-[24px] border border-white/8 p-6 flex flex-col gap-5"
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <ProviderLogo providerId={config.providerId} size={40} />
+      {/* Provider identity */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <ProviderLogo providerId={config.providerId} size={44} />
           <div>
-            <h3 className="text-sm font-semibold text-foreground">{config.displayName}</h3>
-            <p className="text-xs text-muted-foreground">{config.providerId}</p>
+            <h3 className="text-sm font-semibold text-foreground leading-tight">{config.displayName}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{config.providerId}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        {/* Actions */}
+        <div className="flex items-center gap-0.5 -mt-0.5 -mr-1">
           <button
             onClick={() => onHealthCheck(config.providerId)}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             title="Check health"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onConfigure(config.providerId)}
-            className="p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             title="Configure"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={() => onRemove(config.providerId)}
-            className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+            className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
             title="Remove"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <HealthBadge
-          status={health?.status ?? 'unknown'}
-          latencyMs={health?.latencyMs}
-        />
+      {/* Status row */}
+      <div className="flex items-center justify-between pt-1 border-t border-white/6">
+        <HealthBadge status={health?.status ?? 'unknown'} latencyMs={health?.latencyMs} />
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {config.enabled ? (
-            <span className="text-green-400">Ready</span>
+            <span className="text-green-400 font-medium">Ready</span>
           ) : (
             <span className="text-zinc-500">Disabled</span>
           )}
-          <span>Sync: {config.usageFetchInterval}m</span>
+          <span className="text-muted-foreground/50">·</span>
+          <span>Sync {config.usageFetchInterval}m</span>
         </div>
       </div>
 
       {config.lastUsageFetch && (
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-[10px] text-muted-foreground/60 -mt-3">
           Last sync: {new Date(config.lastUsageFetch).toLocaleString()}
         </p>
       )}

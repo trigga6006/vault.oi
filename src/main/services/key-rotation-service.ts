@@ -121,6 +121,13 @@ export class KeyRotationService {
       data.enabled ? 1 : 0,
     );
   }
+
+  deletePoliciesForProject(projectId: number): void {
+    const raw = getRawDatabase();
+    if (!raw) return;
+
+    raw.prepare('DELETE FROM key_rotation_policies WHERE project_id = ?').run(projectId);
+  }
 }
 
 export const keyRotationService = new KeyRotationService();

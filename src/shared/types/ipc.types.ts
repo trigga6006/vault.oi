@@ -2,9 +2,10 @@ import type { ProviderRegistrySummary, ActivatePayload, HealthCheckResult, Model
 import type { ProviderConfigRecord, AlertRuleRecord, AlertEventRecord, RequestLogRecord, ErrorRecordRow, UsageMetricRecord } from './models.types';
 import type { TokenUsage, CalculatedCost } from './pricing.types';
 import type { VaultStatus, ApiKeyMetadata, StoreKeyPayload, RotateKeyPayload, UpdateKeyPayload, TestKeyPayload, VaultInitPayload, VaultUnlockPayload, VaultChangePasswordPayload, VaultAutoLockPayload, SecretsImportResult } from './vault.types';
-import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload, ProjectIntelligence, ProjectEnvExportPlan, ProjectLeakRiskReport, Environment } from './project.types';
+import type { ProjectRecord, ProjectKeyAssignment, CreateProjectPayload, CreateProjectFromEnvPayload, UpdateProjectPayload, AssignKeyPayload, UnassignKeyPayload, SetActiveProjectPayload, ProjectIntelligence, ProjectEnvExportPlan, ProjectLeakRiskReport, Environment, ImportProjectEnvPayload, ProjectEnvImportResult } from './project.types';
 import type { CredentialRecord, CreateCredentialPayload, UpdateCredentialPayload } from './credentials.types';
 import type { VaultProfile, VaultProfileState, CreateVaultProfilePayload, SwitchVaultProfilePayload } from './profile.types';
+import type { GraphFocusTarget, GraphMap } from './graph.types';
 
 export interface MetricsQuery {
   providerId?: string;
@@ -92,6 +93,7 @@ export interface IpcChannelMap {
   'config:list-providers': { req: void; res: ProviderConfigRecord[] };
 
   'pricing:calculate': { req: { providerId: string; modelId: string; usage: TokenUsage }; res: CalculatedCost };
+  'graph:get-map': { req: GraphFocusTarget; res: GraphMap };
 
   // Vault
   'vault:status': { req: void; res: VaultStatus };
@@ -118,12 +120,15 @@ export interface IpcChannelMap {
   'projects:list': { req: void; res: ProjectRecord[] };
   'projects:get': { req: { id: number }; res: ProjectRecord | null };
   'projects:create': { req: CreateProjectPayload; res: ProjectRecord };
+  'projects:create-from-env': { req: CreateProjectFromEnvPayload; res: ProjectEnvImportResult };
   'projects:update': { req: UpdateProjectPayload; res: void };
   'projects:delete': { req: { id: number }; res: void };
   'projects:assign-key': { req: AssignKeyPayload; res: void };
   'projects:unassign-key': { req: UnassignKeyPayload; res: void };
   'projects:get-keys': { req: { projectId: number }; res: ProjectKeyAssignment[] };
   'projects:set-active': { req: SetActiveProjectPayload; res: { projectId: number | null } };
+  'projects:pick-env-file': { req: void; res: { path: string | null } };
+  'projects:import-env': { req: ImportProjectEnvPayload; res: ProjectEnvImportResult };
   'projects:scan-intelligence': { req: { projectId: number }; res: ProjectIntelligence };
   'projects:get-env-export-plan': { req: { projectId: number; environment: Environment }; res: ProjectEnvExportPlan };
   'projects:export-env-safe': { req: { projectId: number; environment: Environment; selectedKeys: string[]; overwriteConflicts: boolean }; res: { exported: number; path: string } };

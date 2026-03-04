@@ -27,6 +27,11 @@ export interface CreateProjectPayload {
   isDefault?: boolean;
 }
 
+export interface CreateProjectFromEnvPayload extends CreateProjectPayload {
+  envFilePath: string;
+  environment?: Environment;
+}
+
 export interface UpdateProjectPayload {
   id: number;
   name?: string;
@@ -53,11 +58,45 @@ export interface SetActiveProjectPayload {
   projectId: number | null;
 }
 
+export interface ImportProjectEnvPayload {
+  projectId: number;
+  envFilePath: string;
+  environment: Environment;
+}
+
+export interface ProjectEnvImportResult {
+  projectId: number;
+  environment: Environment;
+  sourcePath: string;
+  imported: number;
+  updated: number;
+  assigned: number;
+  unchanged: number;
+  skipped: number;
+}
+
 export interface RequiredKeyOccurrence {
   keyName: string;
   sourceFile: string;
   line: number;
   detectionMethod: 'dotenv' | 'docker-compose' | 'typescript' | 'python';
+}
+
+export interface ProjectSyncedSecret {
+  keyName: string;
+  providerId: string | null;
+  environment: Environment;
+  sourceFile: string;
+  keyPrefix: string | null;
+  status: 'imported' | 'updated' | 'assigned' | 'unchanged' | 'unmapped';
+}
+
+export interface ProjectRepoSyncSummary {
+  imported: number;
+  updated: number;
+  assigned: number;
+  unchanged: number;
+  unmapped: number;
 }
 
 export interface ProjectIntelligence {
@@ -73,6 +112,8 @@ export interface ProjectIntelligence {
     projectIds: number[];
   }>;
   occurrences: RequiredKeyOccurrence[];
+  syncedSecrets: ProjectSyncedSecret[];
+  syncSummary: ProjectRepoSyncSummary;
   warnings: string[];
 }
 

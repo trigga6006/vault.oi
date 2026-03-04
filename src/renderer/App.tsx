@@ -1,14 +1,40 @@
-import { MainLayout } from './components/layout/MainLayout';
-import { DashboardView } from './components/dashboard/DashboardView';
-import { ProviderList } from './components/providers/ProviderList';
-import { SettingsView } from './components/settings/SettingsView';
-import { KeyVault } from './components/vault/KeyVault';
+import { lazy, Suspense } from 'react';
 import { VaultSetup } from './components/vault/VaultSetup';
 import { VaultUnlock } from './components/vault/VaultUnlock';
-import { ProjectsView } from './components/projects/ProjectsView';
-import { CredentialsView } from './components/credentials/CredentialsView';
 import { useUiStore } from './store/ui-store';
 import { useVault } from './hooks/useVault';
+
+const MainLayout = lazy(async () => ({
+  default: (await import('./components/layout/MainLayout')).MainLayout,
+}));
+
+const DashboardView = lazy(async () => ({
+  default: (await import('./components/dashboard/DashboardView')).DashboardView,
+}));
+
+const ProviderList = lazy(async () => ({
+  default: (await import('./components/providers/ProviderList')).ProviderList,
+}));
+
+const SettingsView = lazy(async () => ({
+  default: (await import('./components/settings/SettingsView')).SettingsView,
+}));
+
+const KeyVault = lazy(async () => ({
+  default: (await import('./components/vault/KeyVault')).KeyVault,
+}));
+
+const ProjectsView = lazy(async () => ({
+  default: (await import('./components/projects/ProjectsView')).ProjectsView,
+}));
+
+const CredentialsView = lazy(async () => ({
+  default: (await import('./components/credentials/CredentialsView')).CredentialsView,
+}));
+
+const GraphView = lazy(async () => ({
+  default: (await import('./components/graph/GraphView')).GraphView,
+}));
 
 function ViewRouter() {
   const { activeView } = useUiStore();
@@ -20,6 +46,8 @@ function ViewRouter() {
       return <ProviderList />;
     case 'vault':
       return <KeyVault />;
+    case 'graph':
+      return <GraphView />;
     case 'projects':
       return <ProjectsView />;
     case 'credentials':
@@ -31,33 +59,38 @@ function ViewRouter() {
   }
 }
 
+function LoadingScreen({ label = 'Loading workspace...' }: { label?: string }) {
+  return (
+    <div className="flex h-screen w-screen items-center justify-center bg-background">
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <span>{label}</span>
+      </div>
+    </div>
+  );
+}
+
 export function App() {
   const { initialized, unlocked, checking, initializeVault, unlockVault } =
     useVault();
 
-  // Show nothing while checking vault status
   if (checking) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <div className="h-6 w-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-      </div>
-    );
+    return <LoadingScreen label="Checking vault status..." />;
   }
 
-  // First run: create vault
   if (!initialized) {
     return <VaultSetup onInitialize={initializeVault} />;
   }
 
-  // Vault locked: unlock screen
   if (!unlocked) {
     return <VaultUnlock onUnlock={unlockVault} />;
   }
 
-  // Vault unlocked: show main app
   return (
-    <MainLayout>
-      <ViewRouter />
-    </MainLayout>
+    <Suspense fallback={<LoadingScreen />}>
+      <MainLayout>
+        <ViewRouter />
+      </MainLayout>
+    </Suspense>
   );
 }

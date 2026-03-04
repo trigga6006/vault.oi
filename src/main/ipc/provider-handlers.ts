@@ -30,7 +30,7 @@ export function registerProviderHandlers(): void {
 
   registerHandler('provider:deactivate', async (payload) => {
     try {
-      await providerRegistry.deactivate(payload.providerId);
+      await providerService.removeProvider(payload.providerId);
       return { success: true };
     } catch (error) {
       console.error('[IPC] provider:deactivate error:', error);

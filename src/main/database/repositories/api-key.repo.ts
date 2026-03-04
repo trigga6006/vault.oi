@@ -52,6 +52,7 @@ export class ApiKeyRepo {
   async update(
     id: number,
     data: Partial<{
+      providerId: string;
       keyLabel: string;
       encryptedKey: string;
       keyPrefix: string | null;

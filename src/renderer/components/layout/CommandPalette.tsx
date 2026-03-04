@@ -7,12 +7,14 @@ import {
   LayoutDashboard,
   Settings,
   UserRound,
+  Workflow,
 } from 'lucide-react';
 import { useUiStore, type NavView } from '../../store/ui-store';
 
 const commands: Array<{ id: NavView; label: string; icon: React.ElementType }> = [
   { id: 'overview', label: 'Go to Overview', icon: LayoutDashboard },
   { id: 'vault', label: 'Go to Secrets', icon: KeyRound },
+  { id: 'graph', label: 'Go to Graph', icon: Workflow },
   { id: 'providers', label: 'Go to Integrations', icon: Blocks },
   { id: 'projects', label: 'Go to Workspaces', icon: FolderKanban },
   { id: 'credentials', label: 'Go to Credentials', icon: UserRound },

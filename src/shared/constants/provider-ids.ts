@@ -16,6 +16,18 @@ export const PROVIDER_IDS = {
   QWEN: 'qwen',
   COPILOT: 'copilot',
   CURSOR: 'cursor',
+  AZURE: 'azure',
+  MOONSHOT: 'moonshot',
+  EXA: 'exa',
+  CLAUDE: 'claude',
+  CLOUDFLARE: 'cloudflare',
+  NANOBANANA: 'nanobanana',
+  TAVILY: 'tavily',
+  GITHUB: 'github',
+  OPENCLAW: 'openclaw',
+  META: 'meta',
+  AWS: 'aws',
+  N8N: 'n8n',
 } as const;
 
 export type ProviderId = (typeof PROVIDER_IDS)[keyof typeof PROVIDER_IDS];

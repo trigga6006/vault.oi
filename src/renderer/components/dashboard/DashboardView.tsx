@@ -4,20 +4,20 @@ import {
   Blocks,
   FolderKanban,
   KeyRound,
-  LockKeyhole,
   Radio,
-  ShieldCheck,
 } from 'lucide-react';
 import { useProxy } from '../../hooks/useProxy';
 import { useVault } from '../../hooks/useVault';
 import { useUiStore } from '../../store/ui-store';
 import { KeyRotationBanner } from '../vault/KeyRotationBanner';
 import { ProviderLogo } from '../providers/ProviderLogo';
+import { SecretIdentityIcon } from '../secrets/SecretIdentityIcon';
 import { HealthBadge } from '../providers/HealthBadge';
 import type { ProviderConfigRecord } from '../../../shared/types/models.types';
 import type { ProjectRecord } from '../../../shared/types/project.types';
 import type { ApiKeyMetadata } from '../../../shared/types/vault.types';
 import type { HealthCheckResult } from '../../../shared/types/provider.types';
+import { PROVIDER_NAME_BY_ID } from '../../../shared/constants/provider-catalog';
 
 interface OverviewData {
   keys: ApiKeyMetadata[];
@@ -26,8 +26,14 @@ interface OverviewData {
   healthChecks: Record<string, HealthCheckResult>;
 }
 
+const PROVIDER_LABELS: Record<string, string> = {
+  ...PROVIDER_NAME_BY_ID,
+  app: 'App Secret',
+  config: 'Config Value',
+};
+
 export function DashboardView() {
-  const { setActiveView } = useUiStore();
+  const { setActiveView, theme } = useUiStore();
   const { status } = useProxy();
   const { autoLockMinutes } = useVault();
   const [data, setData] = useState<OverviewData>({
@@ -103,26 +109,14 @@ export function DashboardView() {
     return age > 1000 * 60 * 60 * 24 * 30;
   }).length;
 
-  const checklist = [
-    {
-      label: 'Store provider secrets',
-      done: activeKeys.length > 0,
-      hint: activeKeys.length > 0 ? `${activeKeys.length} active` : 'vault.add',
-      view: 'vault' as const,
-    },
-    {
-      label: 'Connect integrations',
-      done: enabledProviders.length > 0,
-      hint: enabledProviders.length > 0 ? `${enabledProviders.length} ready` : 'providers.add',
-      view: 'providers' as const,
-    },
-    {
-      label: 'Map workspaces',
-      done: data.projects.length > 0,
-      hint: data.projects.length > 0 ? `${data.projects.length} mapped` : 'projects.create',
-      view: 'projects' as const,
-    },
-  ];
+  const worstStaleAgeDays = data.keys
+    .filter((key) => key.lastUsedAt != null)
+    .reduce((max, key) => {
+      const age = (Date.now() - new Date(key.lastUsedAt!).getTime()) / (1000 * 60 * 60 * 24);
+      return Math.max(max, age);
+    }, 0);
+
+  const staleVignette = computeStaleVignette(worstStaleAgeDays, theme);
 
   return (
     <motion.div
@@ -131,89 +125,34 @@ export function DashboardView() {
       transition={{ duration: 0.24, ease: 'easeOut' }}
       className="space-y-4"
     >
-      <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-        <div className="glass-strong rounded-[24px] border border-border p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill icon={ShieldCheck} label="vault.encrypted" />
-                <StatusPill icon={Radio} label={status.running ? 'gateway.running' : 'gateway.idle'} />
-                <StatusPill icon={LockKeyhole} label={`autolock.${autoLockMinutes}m`} />
-              </div>
-
-              <div className="space-y-1">
-                <h1 className="text-2xl font-semibold tracking-[-0.03em] text-foreground">
-                  Workspace overview
-                </h1>
-                <p className="max-w-2xl text-sm text-muted-foreground">
-                  Local secrets, provider routing, and workspace assignments.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                <ActionPill label="Open secrets" onClick={() => setActiveView('vault')} />
-                <ActionPill
-                  label="Manage integrations"
-                  onClick={() => setActiveView('providers')}
-                />
-                <ActionPill
-                  label="Open workspaces"
-                  onClick={() => setActiveView('projects')}
-                />
-              </div>
-            </div>
-
-            <div className="min-w-[280px] rounded-[20px] border border-border bg-secondary/35 p-4">
-              <div className="mb-3 text-[11px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
-                session.state
-              </div>
-              <dl className="space-y-2 text-sm">
-                <CompactRow label="gateway" value={status.running ? `:${status.port}` : 'idle'} />
-                <CompactRow label="requests" value={status.requestCount.toLocaleString()} />
-                <CompactRow label="secrets" value={data.keys.length.toString()} />
-                <CompactRow label="integrations" value={healthyProviders.length.toString()} />
-              </dl>
-            </div>
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px]">
+        {/* Workspace overview */}
+        <div className="glass-strong flex flex-col justify-center rounded-[24px] border border-border px-5 py-4">
+          <h1 className="text-xl font-semibold tracking-[-0.03em] text-foreground">
+            Workspace overview
+          </h1>
+          <div className="mt-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${
+                status.running
+                  ? 'bg-emerald-500 dark:bg-emerald-400'
+                  : 'bg-zinc-400 dark:bg-zinc-600'
+              }`}
+            />
+            <span>gateway {status.running ? `:${status.port}` : 'idle'}</span>
+            <span className="text-border">·</span>
+            <span>{status.requestCount} routed</span>
+            <span className="text-border">·</span>
+            <span>auto-lock {autoLockMinutes}m</span>
           </div>
         </div>
 
-        <div className="glass rounded-[24px] border border-border p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-medium text-foreground">Setup queue</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Keep the core path tight and explicit.
-              </p>
-            </div>
-            <span className="rounded-full border border-border bg-secondary/45 px-2.5 py-1 text-[11px] font-mono text-muted-foreground">
-              {checklist.filter((item) => item.done).length}/{checklist.length}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {checklist.map((item) => (
-              <button
-                key={item.label}
-                onClick={() => setActiveView(item.view)}
-                className="flex w-full items-center justify-between rounded-2xl border border-border bg-secondary/28 px-3 py-3 text-left transition-colors hover:bg-secondary/45"
-              >
-                <div>
-                  <div className="text-sm text-foreground">{item.label}</div>
-                  <div className="mt-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-                    {item.hint}
-                  </div>
-                </div>
-                <span
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-mono uppercase tracking-[0.08em] ${
-                    item.done
-                      ? 'bg-emerald-500/12 text-emerald-300'
-                      : 'bg-card text-muted-foreground'
-                  }`}
-                >
-                  {item.done ? 'ready' : 'todo'}
-                </span>
-              </button>
-            ))}
-          </div>
+        {/* Tamagotchi placeholder */}
+        <div className="glass flex flex-col items-center justify-center rounded-[24px] border border-border" style={{ minHeight: 200 }}>
+          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border" />
+          <span className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+            security.pet
+          </span>
         </div>
       </section>
 
@@ -243,6 +182,8 @@ export function DashboardView() {
           label="stale.secrets"
           value={staleKeys.toString()}
           caption="unused > 30d"
+          accentColor={staleVignette?.color}
+          vignetteOpacity={staleVignette?.opacity}
         />
       </section>
 
@@ -264,9 +205,9 @@ export function DashboardView() {
               recentKeys.map((key) => (
                 <ListRow
                   key={key.id}
-                  leading={<ProviderLogo providerId={key.providerId} size={24} />}
+                  leading={<SecretIdentityIcon providerId={key.providerId} keyName={key.keyLabel} size={24} />}
                   title={key.keyLabel}
-                  subtitle={`${key.providerId} / ${key.keyPrefix ?? 'hidden'}...****`}
+                  subtitle={`${PROVIDER_LABELS[key.providerId] ?? key.providerId} / ${key.keyPrefix ?? 'hidden'}...****`}
                   meta={formatRelativeDate(key.createdAt)}
                 />
               ))
@@ -353,57 +294,46 @@ function MetricCard({
   label,
   value,
   caption,
+  accentColor,
+  vignetteOpacity = 0,
 }: {
   icon: React.ElementType;
   label: string;
   value: string;
   caption: string;
+  accentColor?: string;
+  vignetteOpacity?: number;
 }) {
   return (
-    <div className="glass rounded-[20px] border border-border p-4">
-      <div className="flex items-center justify-between">
+    <div className="glass relative overflow-hidden rounded-[20px] border border-border p-4">
+      {accentColor && vignetteOpacity > 0 && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse at center, transparent 20%, ${accentColor} 120%)`,
+            opacity: vignetteOpacity,
+            borderRadius: 'inherit',
+          }}
+        />
+      )}
+      <div className="relative flex items-center justify-between">
         <span className="text-[11px] font-mono uppercase tracking-[0.14em] text-muted-foreground">
           {label}
         </span>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon
+          className="h-4 w-4 transition-colors duration-700"
+          style={{ color: accentColor ?? 'var(--color-muted-foreground)' }}
+        />
       </div>
-      <div className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-foreground">
+      <div
+        className="relative mt-3 text-3xl font-semibold tracking-[-0.04em] transition-colors duration-700"
+        style={{ color: accentColor ?? 'var(--color-foreground)' }}
+      >
         {value}
       </div>
-      <div className="mt-1 text-[11px] font-mono text-muted-foreground">{caption}</div>
+      <div className="relative mt-1 text-[11px] font-mono text-muted-foreground">{caption}</div>
     </div>
-  );
-}
-
-function StatusPill({
-  icon: Icon,
-  label,
-}: {
-  icon: React.ElementType;
-  label: string;
-}) {
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/45 px-3 py-1 text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
-      <Icon className="h-3.5 w-3.5 text-foreground" />
-      {label}
-    </div>
-  );
-}
-
-function ActionPill({
-  label,
-  onClick,
-}: {
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="rounded-full border border-border bg-card px-3 py-1.5 text-[12px] text-foreground transition-colors hover:bg-accent"
-    >
-      {label}
-    </button>
   );
 }
 
@@ -436,16 +366,6 @@ function SectionHeader({
   );
 }
 
-function CompactRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl bg-card/65 px-3 py-2">
-      <span className="text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
-        {label}
-      </span>
-      <span className="text-sm text-foreground">{value}</span>
-    </div>
-  );
-}
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
@@ -485,6 +405,42 @@ function ListRow({
       </div>
     </div>
   );
+}
+
+// Maps the oldest-key age (days since last use) to a vignette color + opacity.
+// Starts faint yellow at 15 days, shifts to orange, reaches full red at 30 days.
+// Light mode uses darker/more saturated values to stay visible on white backgrounds.
+function computeStaleVignette(ageDays: number, theme: 'dark' | 'light'): { color: string; opacity: number } | null {
+  if (ageDays < 15) return null;
+  const t = Math.min((ageDays - 15) / 15, 1); // 0 at 15d → 1 at 30d+
+
+  if (theme === 'light') {
+    // Darker, more saturated palette for light backgrounds
+    const hue = t < 0.5
+      ? 75 - (t * 2) * 30   // 75 (gold) → 45 (orange)
+      : 45 - ((t - 0.5) * 2) * 22; // 45 (orange) → 23 (red)
+    const chroma = t < 0.5
+      ? 0.22 + (t * 2) * 0.06
+      : 0.28 + ((t - 0.5) * 2) * 0.04;
+    const lightness = 0.60 - t * 0.18; // 0.60 → 0.42 (perceptibly dark)
+    return {
+      color: `oklch(${lightness.toFixed(2)} ${chroma.toFixed(2)} ${Math.round(hue)})`,
+      opacity: 0.18 + t * 0.47,
+    };
+  }
+
+  // Dark mode: original values
+  const hue = t < 0.5
+    ? 88 - (t * 2) * 36
+    : 52 - ((t - 0.5) * 2) * 26;
+  const chroma = t < 0.5
+    ? 0.15 + (t * 2) * 0.05
+    : 0.20 + ((t - 0.5) * 2) * 0.05;
+  const lightness = 0.82 - t * 0.20;
+  return {
+    color: `oklch(${lightness.toFixed(2)} ${chroma.toFixed(2)} ${Math.round(hue)})`,
+    opacity: 0.12 + t * 0.58,
+  };
 }
 
 function formatRelativeDate(value: string): string {

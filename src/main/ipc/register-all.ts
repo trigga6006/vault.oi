@@ -49,6 +49,7 @@ import { registerProjectHandlers } from './project-handlers';
 import { registerProfileHandlers } from './profile-handlers';
 import { registerRotationHandlers, registerPricingUpdateHandlers } from './rotation-handlers';
 import { registerCredentialsHandlers } from './credentials-handlers';
+import { registerGraphHandlers } from './graph-handlers';
 
 export function registerAllHandlers(): void {
   registerVaultHandlers();
@@ -63,6 +64,7 @@ export function registerAllHandlers(): void {
   registerProjectHandlers();
   registerProfileHandlers();
   registerCredentialsHandlers();
+  registerGraphHandlers();
   registerRotationHandlers();
   registerPricingUpdateHandlers();
 

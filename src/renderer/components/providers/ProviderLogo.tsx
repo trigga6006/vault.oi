@@ -1,38 +1,17 @@
-import claudeLogo from '../../../assets/logos/claude-color.png';
-import openaiLogo from '../../../assets/logos/openai.png';
-import fireworksLogo from '../../../assets/logos/fireworks-color.png';
-import geminiLogo from '../../../assets/logos/gemini-color.png';
-import perplexityLogo from '../../../assets/logos/perplexity-color.png';
-import grokLogo from '../../../assets/logos/grok.png';
-import ollamaLogo from '../../../assets/logos/ollama.png';
-import mistralLogo from '../../../assets/logos/mistral-color.png';
-import deepseekLogo from '../../../assets/logos/deepseek-color.png';
-import qwenLogo from '../../../assets/logos/qwen-color.png';
-import huggingfaceLogo from '../../../assets/logos/huggingface-color.png';
-import copilotLogo from '../../../assets/logos/copilot-color.png';
-import bytedanceLogo from '../../../assets/logos/bytedance-color.png';
-import midjourneyLogo from '../../../assets/logos/midjourney.png';
-import cohereLogo from '../../../assets/logos/cohere-color.png';
-import cursorLogo from '../../../assets/logos/cursor.png';
+import { useUiStore } from '../../store/ui-store';
+import {
+  PROVIDER_CATALOG_BY_ID,
+  normalizeProviderCatalogId,
+} from '../../../shared/constants/provider-catalog';
 
-export const PROVIDER_LOGOS: Record<string, string> = {
-  anthropic: claudeLogo,
-  openai: openaiLogo,
-  fireworks: fireworksLogo,
-  google: geminiLogo,
-  perplexity: perplexityLogo,
-  xai: grokLogo,
-  ollama: ollamaLogo,
-  mistral: mistralLogo,
-  deepseek: deepseekLogo,
-  qwen: qwenLogo,
-  huggingface: huggingfaceLogo,
-  copilot: copilotLogo,
-  bytedance: bytedanceLogo,
-  midjourney: midjourneyLogo,
-  cohere: cohereLogo,
-  cursor: cursorLogo,
-};
+const logoModules = import.meta.glob('../../../assets/logos/*', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>;
+
+function getAssetPath(fileName: string): string | null {
+  return logoModules[`../../../assets/logos/${fileName}`] ?? null;
+}
 
 interface ProviderLogoProps {
   providerId: string;
@@ -41,7 +20,16 @@ interface ProviderLogoProps {
 }
 
 export function ProviderLogo({ providerId, size = 20, className }: ProviderLogoProps) {
-  const logo = PROVIDER_LOGOS[providerId];
+  const { theme } = useUiStore();
+  const resolvedProviderId = normalizeProviderCatalogId(providerId);
+  const provider = PROVIDER_CATALOG_BY_ID[resolvedProviderId];
+  const logo = (
+    theme === 'light' && provider?.lightModeLogoFile
+      ? getAssetPath(provider.lightModeLogoFile)
+      : provider?.logoFile
+        ? getAssetPath(provider.logoFile)
+        : null
+  );
 
   if (logo) {
     return (
@@ -62,7 +50,6 @@ export function ProviderLogo({ providerId, size = 20, className }: ProviderLogoP
     );
   }
 
-  // Fallback: colored avatar with first 2 letters
   return (
     <div
       className={className}

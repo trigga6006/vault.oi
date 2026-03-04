@@ -26,7 +26,8 @@
       "Bash(npx electron-forge:*)",
       "Bash(ELECTRON_ENABLE_LOGGING=1 npx electron:*)",
       "Bash(ELECTRON_ENABLE_LOGGING=1 ELECTRON_LOG_ASAR_READS=1 node_modules/.bin/electron .:*)",
-      "Bash(ELECTRON_ENABLE_LOGGING=1 ./node_modules/.bin/electron .:*)"
+      "Bash(ELECTRON_ENABLE_LOGGING=1 ./node_modules/.bin/electron .:*)",
+      "Bash(cmd.exe:*)"
     ]
   }
 }

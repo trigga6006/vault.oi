@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { BadgeCheck, Eye, Key, RotateCcw, Trash2, ToggleLeft, ToggleRight } from 'lucide-react';
 import { cn } from '../ui/cn';
-import { ProviderLogo } from '../providers/ProviderLogo';
+import { SecretIdentityIcon } from '../secrets/SecretIdentityIcon';
 import type { ApiKeyMetadata } from '../../../shared/types/vault.types';
 
 interface KeyCardProps {
@@ -33,7 +33,7 @@ export function KeyCard({ keyData, providerName, onReveal, onRotate, onDelete, o
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <ProviderLogo providerId={keyData.providerId} size={20} />
+          <SecretIdentityIcon providerId={keyData.providerId} keyName={keyData.keyLabel} size={20} />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">

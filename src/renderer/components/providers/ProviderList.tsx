@@ -37,9 +37,12 @@ export function ProviderList() {
 
   async function handleRemove(providerId: string) {
     try {
-      await window.omniview.invoke('provider:deactivate', { providerId });
+      const result = await window.omniview.invoke('provider:deactivate', { providerId });
+      if (!result.success) {
+        throw new Error('Provider removal failed');
+      }
       toast.success(`Removed ${providerId}`);
-      loadConfigs();
+      await loadConfigs();
     } catch {
       toast.error(`Failed to remove ${providerId}`);
     }
@@ -63,18 +66,18 @@ export function ProviderList() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-semibold tracking-[-0.04em] text-foreground">Integrations</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Configure the providers OmniView can route through, test connectivity,
+          <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+            Configure the providers OmniView routes through — test connectivity
             and keep endpoints ready for your local gateway.
           </p>
         </div>
         {!showForm && (
           <button
             onClick={() => { setEditProviderId(undefined); setShowForm(true); }}
-            className="flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/92"
+            className="flex items-center gap-2 rounded-2xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/92 shrink-0"
           >
             <Plus className="h-4 w-4" />
             Add integration
@@ -106,7 +109,7 @@ export function ProviderList() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <AnimatePresence>
             {providerConfigs.map((config) => (
               <ProviderCard

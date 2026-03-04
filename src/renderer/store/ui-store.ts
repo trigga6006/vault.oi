@@ -1,8 +1,10 @@
 import { create } from 'zustand';
+import type { GraphFocusTarget } from '../../shared/types/graph.types';
 
 export type NavView =
   | 'overview'
   | 'vault'
+  | 'graph'
   | 'providers'
   | 'projects'
   | 'credentials'
@@ -13,7 +15,10 @@ interface UiState {
   sidebarCollapsed: boolean;
   commandPaletteOpen: boolean;
   theme: 'dark' | 'light';
+  graphFocus: GraphFocusTarget | null;
   setActiveView: (view: NavView) => void;
+  setGraphFocus: (focus: GraphFocusTarget | null) => void;
+  openGraph: (focus: GraphFocusTarget) => void;
   toggleSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setCommandPaletteOpen: (open: boolean) => void;
@@ -26,7 +31,10 @@ export const useUiStore = create<UiState>((set) => ({
   sidebarCollapsed: false,
   commandPaletteOpen: false,
   theme: 'dark',
+  graphFocus: null,
   setActiveView: (view) => set({ activeView: view }),
+  setGraphFocus: (focus) => set({ graphFocus: focus }),
+  openGraph: (focus) => set({ activeView: 'graph', graphFocus: focus }),
   toggleSidebar: () =>
     set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
   setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),

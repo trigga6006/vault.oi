@@ -3,6 +3,7 @@ import { dialog } from 'electron';
 import { apiKeyRepo } from '../database/repositories/api-key.repo';
 import { vaultService } from './vault-service';
 import { PROVIDER_IDS } from '../../shared/constants/provider-ids';
+import { inferKnownProviderId } from '../../shared/constants/provider-inference';
 import type { SecretsImportResult } from '../../shared/types/vault.types';
 
 type SecretInput = {
@@ -13,25 +14,6 @@ type SecretInput = {
 };
 
 const KNOWN_PROVIDERS = new Set(Object.values(PROVIDER_IDS));
-
-const ENV_PROVIDER_HINTS: Array<{ pattern: RegExp; providerId: string }> = [
-  { pattern: /OPENAI/i, providerId: 'openai' },
-  { pattern: /ANTHROPIC|CLAUDE/i, providerId: 'anthropic' },
-  { pattern: /GEMINI|GOOGLE/i, providerId: 'google' },
-  { pattern: /XAI|GROK/i, providerId: 'xai' },
-  { pattern: /MISTRAL/i, providerId: 'mistral' },
-  { pattern: /COHERE/i, providerId: 'cohere' },
-  { pattern: /TOGETHER/i, providerId: 'together' },
-  { pattern: /FIREWORKS/i, providerId: 'fireworks' },
-  { pattern: /HUGGING ?FACE|HF_/i, providerId: 'huggingface' },
-  { pattern: /PERPLEXITY/i, providerId: 'perplexity' },
-  { pattern: /OLLAMA/i, providerId: 'ollama' },
-  { pattern: /OPENROUTER/i, providerId: 'openrouter' },
-  { pattern: /DEEPSEEK/i, providerId: 'deepseek' },
-  { pattern: /QWEN|DASHSCOPE/i, providerId: 'qwen' },
-  { pattern: /COPILOT/i, providerId: 'copilot' },
-  { pattern: /CURSOR/i, providerId: 'cursor' },
-];
 
 export class SecretsImportService {
   async importFromFile(): Promise<SecretsImportResult> {
@@ -260,16 +242,7 @@ export class SecretsImportService {
   }
 
   private inferProviderFromName(input: string): string | null {
-    const text = input.trim();
-    if (!text) return null;
-
-    for (const hint of ENV_PROVIDER_HINTS) {
-      if (hint.pattern.test(text)) {
-        return hint.providerId;
-      }
-    }
-
-    return null;
+    return inferKnownProviderId(input);
   }
 
   private unquote(value: string): string {

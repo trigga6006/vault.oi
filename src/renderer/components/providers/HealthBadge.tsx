@@ -6,10 +6,10 @@ interface HealthBadgeProps {
 }
 
 const statusConfig = {
-  healthy: { label: 'Healthy', color: 'bg-green-500', textColor: 'text-green-400' },
-  degraded: { label: 'Degraded', color: 'bg-yellow-500', textColor: 'text-yellow-400' },
-  unhealthy: { label: 'Unhealthy', color: 'bg-red-500', textColor: 'text-red-400' },
-  unknown: { label: 'Unknown', color: 'bg-zinc-500', textColor: 'text-zinc-400' },
+  healthy: { label: 'Healthy', color: 'bg-green-500', textColor: 'text-green-600 dark:text-green-400' },
+  degraded: { label: 'Degraded', color: 'bg-yellow-500', textColor: 'text-yellow-600 dark:text-yellow-400' },
+  unhealthy: { label: 'Unhealthy', color: 'bg-red-500', textColor: 'text-red-600 dark:text-red-400' },
+  unknown: { label: 'Unknown', color: 'bg-zinc-400', textColor: 'text-zinc-500 dark:text-zinc-400' },
 };
 
 export function HealthBadge({ status, latencyMs }: HealthBadgeProps) {

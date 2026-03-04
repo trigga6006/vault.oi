@@ -15,6 +15,10 @@ export function registerProjectHandlers(): void {
     return projectService.createProject(data);
   });
 
+  registerHandler('projects:create-from-env', async (data) => {
+    return projectService.createProjectFromEnv(data);
+  });
+
   registerHandler('projects:update', async ({ id, ...data }) => {
     await projectService.updateProject(id, data);
   });
@@ -38,6 +42,14 @@ export function registerProjectHandlers(): void {
   registerHandler('projects:set-active', async ({ projectId }) => {
     // Just acknowledge — active project is tracked in renderer state
     return { projectId };
+  });
+
+  registerHandler('projects:pick-env-file', async () => {
+    return { path: await projectService.pickEnvFile() };
+  });
+
+  registerHandler('projects:import-env', async (data) => {
+    return projectService.importEnvIntoProject(data);
   });
 
   registerHandler('projects:scan-intelligence', async ({ projectId }) => {

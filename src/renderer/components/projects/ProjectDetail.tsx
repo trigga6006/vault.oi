@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, RefreshCw, ShieldAlert, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileUp, MoreHorizontal, Plus, RefreshCw, ShieldAlert, Trash2, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 import { EnvironmentBadge } from './EnvironmentBadge';
+import { ProjectEnvImportDialog } from './ProjectEnvImportDialog';
+import { SecretIdentityIcon } from '../secrets/SecretIdentityIcon';
+import { DropdownSelect, type DropdownOption } from '../ui/DropdownSelect';
+import { useUiStore } from '../../store/ui-store';
 import type {
   Environment,
   ProjectEnvExportPlan,
@@ -18,7 +22,14 @@ interface ProjectDetailProps {
   onBack: () => void;
 }
 
+interface ActiveSecretMenuState {
+  id: string;
+  left: number;
+  top: number;
+}
+
 export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
+  const { openGraph } = useUiStore();
   const [assignments, setAssignments] = useState<ProjectKeyAssignment[]>([]);
   const [allKeys, setAllKeys] = useState<ApiKeyMetadata[]>([]);
   const [addingEnv, setAddingEnv] = useState<Environment | null>(null);
@@ -31,6 +42,9 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
   const [selectedExportKeys, setSelectedExportKeys] = useState<string[]>([]);
   const [overwriteConflicts, setOverwriteConflicts] = useState(false);
   const [loadingExportPlan, setLoadingExportPlan] = useState(false);
+  const [expandedEnvironments, setExpandedEnvironments] = useState<Environment[]>([]);
+  const [activeSecretMenu, setActiveSecretMenu] = useState<ActiveSecretMenuState | null>(null);
+  const [showEnvImport, setShowEnvImport] = useState(false);
 
   const [leakReport, setLeakReport] = useState<ProjectLeakRiskReport | null>(null);
   const [scanningLeakRisk, setScanningLeakRisk] = useState(false);
@@ -80,7 +94,7 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
         environment: exportEnvironment,
       })) as ProjectEnvExportPlan;
       setExportPlan(result);
-      setSelectedExportKeys(result.entries.map((entry) => entry.key));
+      setSelectedExportKeys([]);
     } catch {
       toast.error('Failed to generate .env export diff');
     } finally {
@@ -102,6 +116,24 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
     }
   }, [project.id]);
 
+  const refreshWorkspaceData = useCallback(async () => {
+    await Promise.all([
+      fetchAssignments(),
+      fetchKeys(),
+      fetchExportPlan(),
+    ]);
+  }, [fetchAssignments, fetchExportPlan, fetchKeys]);
+
+  const handleScanAndSync = useCallback(async () => {
+    await fetchIntelligence();
+    await refreshWorkspaceData();
+  }, [fetchIntelligence, refreshWorkspaceData]);
+
+  const pickEnvFile = useCallback(async () => {
+    const result = await window.omniview.invoke('projects:pick-env-file', undefined) as { path: string | null };
+    return result.path;
+  }, []);
+
   useEffect(() => {
     fetchAssignments();
     fetchKeys();
@@ -109,6 +141,18 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
     fetchExportPlan();
     fetchLeakRisk();
   }, [fetchAssignments, fetchExportPlan, fetchIntelligence, fetchKeys, fetchLeakRisk]);
+
+  useEffect(() => {
+    if (!activeSecretMenu) return undefined;
+
+    const closeMenu = () => setActiveSecretMenu(null);
+    window.addEventListener('resize', closeMenu);
+    window.addEventListener('scroll', closeMenu, true);
+    return () => {
+      window.removeEventListener('resize', closeMenu);
+      window.removeEventListener('scroll', closeMenu, true);
+    };
+  }, [activeSecretMenu]);
 
   async function handleAssign(env: Environment) {
     if (!selectedKeyId) return;
@@ -169,30 +213,196 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
     });
   }
 
+  async function handleImportEnv(data: {
+    envFilePath: string;
+    environment: Environment;
+  }) {
+    try {
+      const result = await window.omniview.invoke('projects:import-env', {
+        projectId: project.id,
+        envFilePath: data.envFilePath,
+        environment: data.environment,
+      });
+      toast.success(
+        `Imported ${result.imported + result.updated} value${result.imported + result.updated === 1 ? '' : 's'} and assigned ${result.assigned} to ${data.environment}.`,
+      );
+      setShowEnvImport(false);
+      await refreshWorkspaceData();
+      await fetchIntelligence();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to import .env');
+    }
+  }
+
+  function toggleEnvironmentCard(environment: Environment) {
+    setExpandedEnvironments((current) => (
+      current.includes(environment)
+        ? current.filter((item) => item !== environment)
+        : [...current, environment]
+    ));
+  }
+
+  function getSecretMenuId(secret: ProjectIntelligence['syncedSecrets'][number]) {
+    return `${secret.keyName}:${secret.providerId ?? 'unmapped'}:${secret.sourceFile}`;
+  }
+
+  function resolveImportedSecretKey(secret: ProjectIntelligence['syncedSecrets'][number]) {
+    if (!secret.providerId) return null;
+
+    return allKeys.find(
+      (key) =>
+        key.providerId === secret.providerId
+        && key.keyLabel.trim().toUpperCase() === secret.keyName.trim().toUpperCase(),
+    ) ?? null;
+  }
+
+  function getAssignedEnvironmentsForKey(apiKeyId: number): Environment[] {
+    return assignments
+      .filter((assignment) => assignment.apiKeyId === apiKeyId)
+      .map((assignment) => assignment.environment);
+  }
+
+  async function handleAssignDiscoveredSecret(
+    secret: ProjectIntelligence['syncedSecrets'][number],
+    environment: Environment,
+  ) {
+    const matchingKey = resolveImportedSecretKey(secret);
+    if (!matchingKey || !secret.providerId) {
+      toast.error('This repo secret is not importable yet');
+      return;
+    }
+
+    const alreadyAssigned = assignments.some(
+      (assignment) => assignment.apiKeyId === matchingKey.id && assignment.environment === environment,
+    );
+    if (alreadyAssigned) {
+      const existingAssignment = assignments.find(
+        (assignment) => assignment.apiKeyId === matchingKey.id && assignment.environment === environment,
+      );
+      if (!existingAssignment) {
+        setActiveSecretMenu(null);
+        return;
+      }
+
+      try {
+        await window.omniview.invoke('projects:unassign-key', {
+          projectId: project.id,
+          apiKeyId: matchingKey.id,
+          environment,
+        });
+        toast.success(`Removed ${secret.keyName} from ${environment}`);
+        setActiveSecretMenu(null);
+        await refreshWorkspaceData();
+        await fetchIntelligence();
+      } catch {
+        toast.error('Failed to remove repo secret assignment');
+      }
+
+      return;
+    }
+
+    if (!matchingKey || !secret.providerId) {
+      setActiveSecretMenu(null);
+      return;
+    }
+
+    const hasPrimaryForProvider = assignments.some((assignment) => {
+      if (assignment.environment !== environment) return false;
+      const key = allKeys.find((item) => item.id === assignment.apiKeyId);
+      return key?.providerId === secret.providerId && assignment.isPrimary;
+    });
+
+    try {
+      await window.omniview.invoke('projects:assign-key', {
+        projectId: project.id,
+        apiKeyId: matchingKey.id,
+        environment,
+        isPrimary: !hasPrimaryForProvider,
+      });
+      toast.success(`Assigned ${secret.keyName} to ${environment}`);
+      setActiveSecretMenu(null);
+      await refreshWorkspaceData();
+      await fetchIntelligence();
+    } catch {
+      toast.error('Failed to assign repo secret');
+    }
+  }
+
   const environments: Environment[] = ['dev', 'staging', 'prod'];
+  const environmentOptions: DropdownOption[] = [
+    { value: 'dev', label: 'Development', description: 'Local and day-to-day work.' },
+    { value: 'staging', label: 'Staging', description: 'Pre-production validation.' },
+    { value: 'prod', label: 'Production', description: 'Live deployment secrets.' },
+  ];
+  const assignableKeyOptions = useMemo<DropdownOption[]>(
+    () => [
+      {
+        value: '',
+        label: 'Select a secret',
+        description: 'Choose a vault secret to assign to this environment.',
+      },
+      ...allKeys.map((key) => ({
+        value: String(key.id),
+        label: key.keyLabel,
+        description: `${key.providerId} - ${key.keyPrefix}...`,
+        icon: <SecretIdentityIcon providerId={key.providerId} keyName={key.keyLabel} size={16} />,
+      })),
+    ],
+    [allKeys],
+  );
+
+  const activeSecretMenuSecret = activeSecretMenu && intelligence
+    ? intelligence.syncedSecrets.find((secret) => getSecretMenuId(secret) === activeSecretMenu.id) ?? null
+    : null;
+  const activeSecretMenuKey = activeSecretMenuSecret
+    ? resolveImportedSecretKey(activeSecretMenuSecret)
+    : null;
+  const activeSecretMenuAssignments = activeSecretMenuKey
+    ? getAssignedEnvironmentsForKey(activeSecretMenuKey.id)
+    : [];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onBack}
-          className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div
-            className="h-3 w-3 rounded-full"
-            style={{ backgroundColor: project.color }}
-          />
-          <div>
-            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground">
-              {project.name}
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Environment-specific secret assignments for this workspace.
-            </p>
+          <button
+            onClick={onBack}
+            className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: project.color }}
+            />
+            <div>
+              <h2 className="text-2xl font-semibold tracking-[-0.03em] text-foreground">
+                {project.name}
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Environment-specific secret assignments for this workspace.
+              </p>
+            </div>
           </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => openGraph({ type: 'workspace', id: project.id })}
+            className="inline-flex items-center gap-2 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/14"
+          >
+            <Workflow className="h-4 w-4" />
+            View graph
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowEnvImport(true)}
+            className="inline-flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.08]"
+          >
+            <FileUp className="h-4 w-4" />
+            Import .env
+          </button>
         </div>
       </div>
 
@@ -200,6 +410,16 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
         <p className="text-sm leading-6 text-muted-foreground">
           {project.description}
         </p>
+      )}
+
+      {showEnvImport && (
+        <ProjectEnvImportDialog
+          mode="import"
+          project={project}
+          onCancel={() => setShowEnvImport(false)}
+          onPickFile={pickEnvFile}
+          onImport={handleImportEnv}
+        />
       )}
 
       <section className="glass rounded-[24px] border border-white/8 p-4 space-y-4">
@@ -211,15 +431,13 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <select
+            <DropdownSelect
               value={exportEnvironment}
-              onChange={(e) => setExportEnvironment(e.target.value as Environment)}
-              className="rounded-xl border border-border bg-secondary/50 px-3 py-2 text-xs text-foreground outline-none"
-            >
-              {environments.map((env) => (
-                <option key={env} value={env}>{env}</option>
-              ))}
-            </select>
+              onChange={(value) => setExportEnvironment(value as Environment)}
+              options={environmentOptions}
+              className="min-w-[13rem]"
+              align="right"
+            />
             <button
               onClick={fetchExportPlan}
               disabled={loadingExportPlan}
@@ -347,16 +565,16 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
           <div>
             <h3 className="text-sm font-medium text-foreground">Repository key intelligence</h3>
             <p className="text-xs text-muted-foreground mt-1">
-              Scan .env, .env.local, config.ts, settings.py, and docker-compose.yml for required key names.
+              Scan linked repo files for env references, then sync discovered repo secrets into this workspace.
             </p>
           </div>
           <button
-            onClick={fetchIntelligence}
+            onClick={handleScanAndSync}
             disabled={scanning}
             className="flex items-center gap-2 rounded-xl border border-border px-3 py-2 text-xs text-foreground hover:bg-accent disabled:opacity-60"
           >
             <RefreshCw className={`h-3 w-3 ${scanning ? 'animate-spin' : ''}`} />
-            {scanning ? 'Scanning...' : 'Scan now'}
+            {scanning ? 'Scanning...' : 'Scan + sync'}
           </button>
         </div>
 
@@ -364,11 +582,11 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
           <div className="space-y-3 text-xs">
             <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
               <span>Scanned {intelligence.scannedFiles.length} file(s)</span>
-              <span>•</span>
+              <span>|</span>
               <span>{new Date(intelligence.scannedAt).toLocaleString()}</span>
               {intelligence.repoPath && (
                 <>
-                  <span>•</span>
+                  <span>|</span>
                   <span className="truncate max-w-[26rem]">{intelligence.repoPath}</span>
                 </>
               )}
@@ -377,12 +595,22 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
             {intelligence.warnings.length > 0 && (
               <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-amber-200 space-y-1">
                 {intelligence.warnings.map((warning) => (
-                  <p key={warning}>• {warning}</p>
+                  <p key={warning}>* {warning}</p>
                 ))}
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+                <p className="text-[11px] text-muted-foreground mb-1">Repo secrets synced</p>
+                <p className="text-lg font-semibold text-foreground">
+                  {intelligence.syncedSecrets.filter((secret) => secret.status !== 'unmapped').length}
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {intelligence.syncSummary.imported} new, {intelligence.syncSummary.updated} updated, {intelligence.syncSummary.unchanged} unchanged
+                </p>
+              </div>
+
               <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3">
                 <p className="text-[11px] text-muted-foreground mb-1">Missing keys</p>
                 {intelligence.missingKeys.length === 0 ? (
@@ -423,6 +651,112 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
                   </ul>
                 )}
               </div>
+
+              <div className="rounded-xl border border-border bg-secondary/20 p-3">
+                <p className="text-[11px] text-muted-foreground mb-1">Unmapped repo values</p>
+                {intelligence.syncSummary.unmapped === 0 ? (
+                  <p className="text-emerald-300">None</p>
+                ) : (
+                  <p className="text-foreground">{intelligence.syncSummary.unmapped}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border/70 bg-secondary/20 p-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">Discovered repo secrets</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Values found in repo files are imported into the vault and attached to this workspace when possible.
+                  </p>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {intelligence.syncedSecrets.length} item(s)
+                </p>
+              </div>
+
+              {intelligence.syncedSecrets.length === 0 ? (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  No importable secret values were found in the linked repository files.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-2 max-h-60 overflow-auto">
+                  {intelligence.syncedSecrets.map((secret) => {
+                    const menuId = getSecretMenuId(secret);
+                    const importedKey = resolveImportedSecretKey(secret);
+                    const assignedEnvironments = importedKey
+                      ? getAssignedEnvironmentsForKey(importedKey.id)
+                      : [];
+
+                    return (
+                      <div
+                        key={`${secret.environment}:${secret.keyName}:${secret.sourceFile}`}
+                        className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-white/8 bg-background/30 px-3 py-2"
+                      >
+                        <div className="flex min-w-0 items-start gap-3">
+                          <SecretIdentityIcon providerId={secret.providerId} keyName={secret.keyName} size={18} />
+                          <div className="space-y-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground">
+                              {secret.keyName}
+                              {secret.providerId && (
+                                <span className="ml-2 text-[11px] text-muted-foreground">{secret.providerId}</span>
+                              )}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {secret.sourceFile} | {secret.environment}
+                              {secret.keyPrefix && (
+                                <span className="ml-2 font-mono text-foreground">{secret.keyPrefix}...****</span>
+                              )}
+                            </p>
+                            {assignedEnvironments.length > 0 && (
+                              <p className="text-[11px] text-muted-foreground">
+                                Assigned to: {assignedEnvironments.join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="relative flex items-center gap-2">
+                          <span
+                            className={
+                              secret.status === 'unmapped'
+                                ? 'rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-amber-200'
+                                : secret.status === 'updated'
+                                  ? 'rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-sky-200'
+                                  : secret.status === 'unchanged'
+                                    ? 'rounded-full border border-border px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-muted-foreground'
+                                    : 'rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] uppercase tracking-[0.12em] text-emerald-200'
+                            }
+                          >
+                            {secret.status}
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect();
+                              setActiveSecretMenu((current) => (
+                                current?.id === menuId
+                                  ? null
+                                  : {
+                                    id: menuId,
+                                    top: rect.bottom + 8,
+                                    left: Math.max(12, rect.right - 176),
+                                  }
+                              ));
+                            }}
+                            disabled={!importedKey}
+                            className="rounded-lg border border-border bg-secondary/30 p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
+                            title={importedKey ? 'Assign to environment' : 'Unavailable until imported'}
+                          >
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -430,36 +764,57 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
 
       {environments.map((env) => {
         const envAssignments = assignments.filter((item) => item.environment === env);
+        const isExpanded = expandedEnvironments.includes(env);
         return (
           <section
             key={env}
             className="glass rounded-[24px] border border-white/8 p-4 space-y-3"
           >
-            <div className="flex items-center justify-between">
-              <EnvironmentBadge environment={env} className="text-xs" />
-              <button
-                onClick={() => setAddingEnv(env)}
-                className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Plus className="h-3 w-3" />
-                Assign secret
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => toggleEnvironmentCard(env)}
+              className="flex w-full items-center justify-between gap-3 text-left"
+            >
+              <div className="flex items-center gap-3">
+                <EnvironmentBadge environment={env} className="text-xs" />
+                <span className="text-xs text-muted-foreground">
+                  {envAssignments.length === 0
+                    ? 'No assigned secrets'
+                    : `${envAssignments.length} assigned secret${envAssignments.length === 1 ? '' : 's'}`}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setAddingEnv(env);
+                    if (!isExpanded) {
+                      toggleEnvironmentCard(env);
+                    }
+                  }}
+                  className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Plus className="h-3 w-3" />
+                  Assign secret
+                </button>
+                <ChevronDown
+                  className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                />
+              </div>
+            </button>
 
             {addingEnv === env && (
               <div className="flex items-center gap-2 rounded-2xl bg-secondary/30 p-2">
-                <select
-                  value={selectedKeyId ?? ''}
-                  onChange={(e) => setSelectedKeyId(Number(e.target.value) || null)}
-                  className="flex-1 rounded-xl border border-border bg-secondary/50 px-3 py-2 text-xs text-foreground outline-none"
-                >
-                  <option value="">Select a secret...</option>
-                  {allKeys.map((key) => (
-                    <option key={key.id} value={key.id}>
-                      {key.providerId} - {key.keyLabel} ({key.keyPrefix}...)
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <DropdownSelect
+                    value={selectedKeyId ? String(selectedKeyId) : ''}
+                    onChange={(value) => setSelectedKeyId(value ? Number(value) : null)}
+                    options={assignableKeyOptions}
+                    placeholder="Select a secret"
+                    menuClassName="max-w-[28rem]"
+                  />
+                </div>
                 <button
                   onClick={() => handleAssign(env)}
                   disabled={!selectedKeyId}
@@ -479,47 +834,92 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
               </div>
             )}
 
-            {envAssignments.length === 0 && addingEnv !== env ? (
-              <p className="text-xs text-muted-foreground/70">
-                No secrets assigned.
-              </p>
-            ) : (
+            {isExpanded ? (
               <div className="space-y-2">
-                {envAssignments.map((assignment) => {
-                  const keyMeta = allKeys.find(
-                    (key) => key.id === assignment.apiKeyId,
-                  );
+                {envAssignments.length === 0 && addingEnv !== env ? (
+                  <p className="text-xs text-muted-foreground/70">
+                    No secrets assigned.
+                  </p>
+                ) : (
+                  envAssignments.map((assignment) => {
+                    const keyMeta = allKeys.find(
+                      (key) => key.id === assignment.apiKeyId,
+                    );
 
-                  return (
-                    <div
-                      key={assignment.id}
-                      className="flex items-center justify-between rounded-2xl bg-secondary/20 px-3 py-2"
-                    >
-                      <span className="text-xs text-foreground">
-                        {keyMeta?.providerId ?? '?'} - {keyMeta?.keyLabel ?? '?'}{' '}
-                        <span className="text-muted-foreground">
-                          ({keyMeta?.keyPrefix ?? '****'}...)
-                        </span>
-                        {assignment.isPrimary && (
-                          <span className="ml-1.5 text-[10px] text-primary">
-                            Primary
-                          </span>
-                        )}
-                      </span>
-                      <button
-                        onClick={() => handleUnassign(assignment)}
-                        className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+                    return (
+                      <div
+                        key={assignment.id}
+                        className="flex items-center justify-between rounded-2xl bg-secondary/20 px-3 py-2"
                       >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
-                  );
-                })}
+                        <span className="flex items-center gap-2 text-xs text-foreground">
+                          <SecretIdentityIcon providerId={keyMeta?.providerId} keyName={keyMeta?.keyLabel} size={16} />
+                          <span>
+                            {keyMeta?.providerId ?? '?'} - {keyMeta?.keyLabel ?? '?'}{' '}
+                            <span className="text-muted-foreground">
+                              ({keyMeta?.keyPrefix ?? '****'}...)
+                            </span>
+                            {assignment.isPrimary && (
+                              <span className="ml-1.5 text-[10px] text-primary">
+                                Primary
+                              </span>
+                            )}
+                          </span>
+                        </span>
+                        <button
+                          onClick={() => handleUnassign(assignment)}
+                          className="rounded p-1 text-muted-foreground transition-colors hover:text-destructive"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
               </div>
-            )}
+            ) : null}
           </section>
         );
       })}
+
+      {activeSecretMenu && activeSecretMenuSecret && activeSecretMenuKey && (
+        <>
+          <button
+            type="button"
+            aria-label="Close repo secret assignment menu"
+            onClick={() => setActiveSecretMenu(null)}
+            className="fixed inset-0 z-20 cursor-default bg-transparent"
+          />
+          <div
+            className="fixed z-30 w-44 rounded-xl border border-border bg-card p-2 shadow-lg"
+            style={{
+              top: activeSecretMenu.top,
+              left: activeSecretMenu.left,
+            }}
+          >
+            <p className="px-2 py-1 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+              Assign to
+            </p>
+            <div className="mt-1 space-y-1">
+              {environments.map((environment) => {
+                const isAssigned = activeSecretMenuAssignments.includes(environment);
+                return (
+                  <button
+                    key={environment}
+                    type="button"
+                    onClick={() => handleAssignDiscoveredSecret(activeSecretMenuSecret, environment)}
+                    className="flex w-full items-center justify-between rounded-lg px-2 py-2 text-left text-xs text-foreground transition-colors hover:bg-accent"
+                  >
+                    <span>{environment}</span>
+                    {isAssigned && (
+                      <span className="text-[10px] text-primary">Assigned</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 }

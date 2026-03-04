@@ -1,5 +1,6 @@
 import { vaultService } from './vault-service';
 import { apiKeyRepo } from '../database/repositories/api-key.repo';
+import { projectKeyRepo } from '../database/repositories/project-key.repo';
 import type { ApiKeyMetadata } from '../../shared/types/vault.types';
 
 export class KeyVaultService {
@@ -99,6 +100,7 @@ export class KeyVaultService {
 
   /** Delete a key */
   async deleteKey(id: number): Promise<void> {
+    await projectKeyRepo.deleteForKey(id);
     await apiKeyRepo.delete(id);
   }
 

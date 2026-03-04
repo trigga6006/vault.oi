@@ -47,6 +47,10 @@ export class CredentialsRepo {
   async delete(id: number) {
     return this.db.delete(credentials).where(eq(credentials.id, id));
   }
+
+  async deleteForProject(projectId: number) {
+    return this.db.delete(credentials).where(eq(credentials.projectId, projectId));
+  }
 }
 
 export const credentialsRepo = new CredentialsRepo();
