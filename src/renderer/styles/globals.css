@@ -1,48 +1,8 @@
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Geist';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-mono/GeistMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
 @theme {
-  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --font-sans: 'Segoe UI Variable Text', 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  --font-mono: 'Cascadia Code', 'SF Mono', 'Segoe UI Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   --color-background: oklch(0.105 0.004 260);
   --color-foreground: oklch(0.982 0.002 260);
@@ -82,26 +42,26 @@
 
 [data-theme='light'] {
   color-scheme: light;
-  --color-background: oklch(0.972 0.004 255);
-  --color-foreground: oklch(0.21 0.008 255);
-  --color-card: oklch(0.992 0.002 255);
-  --color-card-foreground: oklch(0.21 0.008 255);
-  --color-popover: oklch(0.992 0.002 255);
-  --color-popover-foreground: oklch(0.21 0.008 255);
-  --color-primary: oklch(0.15 0.01 255);
-  --color-primary-foreground: oklch(0.985 0.002 255);
-  --color-secondary: oklch(0.94 0.004 255);
-  --color-secondary-foreground: oklch(0.21 0.008 255);
-  --color-muted: oklch(0.94 0.004 255);
-  --color-muted-foreground: oklch(0.52 0.01 255);
-  --color-accent: oklch(0.91 0.006 255);
-  --color-accent-foreground: oklch(0.21 0.008 255);
-  --color-border: oklch(0.87 0.006 255);
-  --color-input: oklch(0.87 0.006 255);
-  --color-ring: oklch(0.58 0.02 255);
-  --color-sidebar: oklch(0.955 0.004 255);
-  --color-sidebar-foreground: oklch(0.21 0.008 255);
-  --color-sidebar-border: oklch(0.88 0.006 255);
+  --color-background: oklch(0.95 0.008 85);
+  --color-foreground: oklch(0.24 0.012 75);
+  --color-card: oklch(0.975 0.004 80);
+  --color-card-foreground: oklch(0.24 0.012 75);
+  --color-popover: oklch(0.978 0.004 80);
+  --color-popover-foreground: oklch(0.24 0.012 75);
+  --color-primary: oklch(0.2 0.014 75);
+  --color-primary-foreground: oklch(0.985 0.002 85);
+  --color-secondary: oklch(0.925 0.006 85);
+  --color-secondary-foreground: oklch(0.24 0.012 75);
+  --color-muted: oklch(0.925 0.006 85);
+  --color-muted-foreground: oklch(0.5 0.014 75);
+  --color-accent: oklch(0.9 0.008 82);
+  --color-accent-foreground: oklch(0.24 0.012 75);
+  --color-border: oklch(0.85 0.008 80);
+  --color-input: oklch(0.85 0.008 80);
+  --color-ring: oklch(0.62 0.018 78);
+  --color-sidebar: oklch(0.935 0.007 84);
+  --color-sidebar-foreground: oklch(0.24 0.012 75);
+  --color-sidebar-border: oklch(0.84 0.008 80);
 }
 
 @utility glass {
@@ -211,7 +171,7 @@ body {
       180deg,
       transparent 0,
       transparent 31px,
-      rgba(16, 24, 40, 0.022) 32px
+      rgba(68, 59, 45, 0.032) 32px
     ),
-    linear-gradient(180deg, #f4f6f8 0%, #eef2f5 100%);
+    linear-gradient(180deg, #f1ede6 0%, #e7e1d7 100%);
 }

@@ -8,6 +8,7 @@ declare global {
         payload: IpcChannelMap[C]['req'],
       ) => Promise<IpcChannelMap[C]['res']>;
       on: (channel: IpcEventChannel, callback: (...args: unknown[]) => void) => () => void;
+      setWindowTheme: (theme: 'dark' | 'light') => void;
       platform: NodeJS.Platform;
     };
   }

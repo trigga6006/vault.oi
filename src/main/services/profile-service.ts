@@ -130,6 +130,8 @@ export class ProfileService {
     state.activeProfileId = profileId;
     await this.saveState(state);
 
+    const wasUnlocked = vaultService.isUnlocked;
+
     closeDatabase();
     setDatabaseProfile(profileId);
     initializeDatabase();
@@ -139,7 +141,12 @@ export class ProfileService {
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) {
         win.webContents.send('profile:switched', { profileId });
-        win.webContents.reload();
+        // Avoid unlock-screen flash when switching profiles while already locked.
+        // When switching from an unlocked session, keep reload behavior to reset
+        // renderer state after profile context changes.
+        if (wasUnlocked) {
+          win.webContents.reload();
+        }
       }
     }
   }

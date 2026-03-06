@@ -1,6 +1,6 @@
 {
   "name": "omniview",
-  "productName": "OmniView",
+  "productName": "vault.oi",
   "version": "0.1.0",
   "description": "Local secret manager and developer workspace for AI providers",
   "main": ".vite/build/main.js",
@@ -8,6 +8,7 @@
   "scripts": {
     "start": "electron-forge start",
     "dev": "node scripts/dev.mjs",
+    "cli": "node scripts/cli.mjs",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",

@@ -10,12 +10,15 @@ export type NavView =
   | 'credentials'
   | 'settings';
 
+export type PetKind = 'uv' | 'void' | 'crystal';
+
 interface UiState {
   activeView: NavView;
   sidebarCollapsed: boolean;
   commandPaletteOpen: boolean;
   theme: 'dark' | 'light';
   graphFocus: GraphFocusTarget | null;
+  petKind: PetKind;
   setActiveView: (view: NavView) => void;
   setGraphFocus: (focus: GraphFocusTarget | null) => void;
   openGraph: (focus: GraphFocusTarget) => void;
@@ -24,6 +27,7 @@ interface UiState {
   setCommandPaletteOpen: (open: boolean) => void;
   toggleCommandPalette: () => void;
   setTheme: (theme: 'dark' | 'light') => void;
+  setPetKind: (kind: PetKind) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -32,6 +36,7 @@ export const useUiStore = create<UiState>((set) => ({
   commandPaletteOpen: false,
   theme: 'dark',
   graphFocus: null,
+  petKind: 'uv',
   setActiveView: (view) => set({ activeView: view }),
   setGraphFocus: (focus) => set({ graphFocus: focus }),
   openGraph: (focus) => set({ activeView: 'graph', graphFocus: focus }),
@@ -42,4 +47,5 @@ export const useUiStore = create<UiState>((set) => ({
   toggleCommandPalette: () =>
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
   setTheme: (theme) => set({ theme }),
+  setPetKind: (kind) => set({ petKind: kind }),
 }));

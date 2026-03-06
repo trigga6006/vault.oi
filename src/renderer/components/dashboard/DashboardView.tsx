@@ -12,6 +12,7 @@ import { useUiStore } from '../../store/ui-store';
 import { KeyRotationBanner } from '../vault/KeyRotationBanner';
 import { ProviderLogo } from '../providers/ProviderLogo';
 import { SecretIdentityIcon } from '../secrets/SecretIdentityIcon';
+import { SecurityPet } from './SecurityPet';
 import { HealthBadge } from '../providers/HealthBadge';
 import type { ProviderConfigRecord } from '../../../shared/types/models.types';
 import type { ProjectRecord } from '../../../shared/types/project.types';
@@ -147,12 +148,9 @@ export function DashboardView() {
           </div>
         </div>
 
-        {/* Tamagotchi placeholder */}
+        {/* Security pet */}
         <div className="glass flex flex-col items-center justify-center rounded-[24px] border border-border" style={{ minHeight: 200 }}>
-          <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-border" />
-          <span className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-            security.pet
-          </span>
+          <SecurityPet keys={data.keys} />
         </div>
       </section>
 

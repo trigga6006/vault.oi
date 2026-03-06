@@ -1,14 +1,82 @@
-import { app, BrowserWindow, dialog, session } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, session } from 'electron';
+import fs from 'node:fs';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
+import { extractCliArgs, runCli } from './cli/runner';
+import appIcon from '../assets/app/vaultoi-icon.png';
 
-if (started) {
+const CLI_ROOT_TOKENS = new Set([
+  'help',
+  'version',
+  'vault',
+  'profiles',
+  'keys',
+  'credentials',
+  'projects',
+  'secrets',
+]);
+
+function parseCliArgsFromEnv(): string[] | null {
+  const raw = process.env.OMNIVIEW_CLI_ARGS;
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
+      return [];
+    }
+    return parsed;
+  } catch {
+    return [];
+  }
+}
+
+function parseCliArgsFromFallbackArgv(argv: string[]): string[] | null {
+  for (let i = 0; i < argv.length; i += 1) {
+    if (CLI_ROOT_TOKENS.has(argv[i])) {
+      return argv.slice(i);
+    }
+  }
+  return null;
+}
+
+const cliArgsFromFlag = extractCliArgs(process.argv);
+const cliArgsFromEnv = parseCliArgsFromEnv();
+const cliArgsFromFallback = parseCliArgsFromFallbackArgv(process.argv.slice(2));
+const isCliMode = cliArgsFromFlag !== null
+  || process.env.OMNIVIEW_CLI_MODE === '1'
+  || cliArgsFromEnv !== null
+  || cliArgsFromFallback !== null;
+const cliArgs = cliArgsFromFlag ?? cliArgsFromEnv ?? cliArgsFromFallback ?? [];
+const APP_USER_MODEL_ID = 'vault.oi';
+const APP_ICON = appIcon.startsWith('data:')
+  ? nativeImage.createFromDataURL(appIcon)
+  : nativeImage.createFromPath(appIcon);
+
+function configureUserDataPathCompatibility(): void {
+  const currentUserDataPath = app.getPath('userData');
+  const legacyUserDataPath = path.join(app.getPath('appData'), 'OmniView');
+
+  if (path.resolve(currentUserDataPath) === path.resolve(legacyUserDataPath)) {
+    return;
+  }
+
+  if (fs.existsSync(legacyUserDataPath)) {
+    app.setPath('userData', legacyUserDataPath);
+    console.log(`[Main] Using legacy userData path: ${legacyUserDataPath}`);
+  }
+}
+
+configureUserDataPathCompatibility();
+
+if (started && !isCliMode) {
   app.quit();
 }
 
 process.on('uncaughtException', (error) => {
   console.error('[FATAL] Uncaught exception:', error);
-  dialog.showErrorBox('OmniView Error', error.stack ?? error.message);
+  if (!isCliMode) {
+    dialog.showErrorBox('OmniView Error', error.stack ?? error.message);
+  }
 });
 
 process.on('unhandledRejection', (reason) => {
@@ -16,6 +84,22 @@ process.on('unhandledRejection', (reason) => {
 });
 
 let mainWindow: BrowserWindow | null = null;
+
+function getTitleBarSymbolColor(theme: 'dark' | 'light'): string {
+  return theme === 'light' ? '#3F3A33' : '#FFFFFF';
+}
+
+function applyWindowTheme(window: BrowserWindow | null, theme: 'dark' | 'light'): void {
+  if (!window || process.platform !== 'win32') {
+    return;
+  }
+
+  window.setTitleBarOverlay({
+    color: '#00000000',
+    symbolColor: getTitleBarSymbolColor(theme),
+    height: 40,
+  });
+}
 
 function isTrustedNavigation(url: string): boolean {
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -44,6 +128,7 @@ function getPlatformWindowOptions(): Electron.BrowserWindowConstructorOptions {
     minWidth: 900,
     minHeight: 600,
     show: false,
+    icon: APP_ICON,
     webPreferences: hardenedWebPreferences,
   };
 
@@ -81,6 +166,8 @@ function createWindow(): void {
   const options = getPlatformWindowOptions();
   mainWindow = new BrowserWindow(options);
   mainWindow.setContentProtection(true);
+  mainWindow.setIcon(APP_ICON);
+  applyWindowTheme(mainWindow, 'dark');
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
@@ -118,6 +205,19 @@ function createWindow(): void {
     mainWindow = null;
   });
 }
+
+ipcMain.on('window:set-theme', (event, theme: 'dark' | 'light') => {
+  const senderUrl = event.senderFrame?.url ?? '';
+  if (!isTrustedNavigation(senderUrl)) {
+    return;
+  }
+
+  if (theme !== 'dark' && theme !== 'light') {
+    return;
+  }
+
+  applyWindowTheme(BrowserWindow.fromWebContents(event.sender), theme);
+});
 
 async function initializeBackendServices(): Promise<void> {
   try {
@@ -218,6 +318,16 @@ async function initializeBackendServices(): Promise<void> {
 }
 
 app.on('ready', async () => {
+  if (process.platform === 'win32') {
+    app.setAppUserModelId(APP_USER_MODEL_ID);
+  }
+
+  if (isCliMode) {
+    const exitCode = await runCli(app, cliArgs ?? []);
+    app.exit(exitCode);
+    return;
+  }
+
   // Enforce CSP via response headers (not HTML meta tag) so we can
   // loosen script-src in development for Vite's inline React-refresh preamble.
   const isDev = !!MAIN_WINDOW_VITE_DEV_SERVER_URL;
@@ -253,6 +363,10 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', async () => {
+  if (isCliMode) {
+    return;
+  }
+
   try {
     const { proxyService } = await import('./services/proxy-service');
     const { usageFetcher } = await import('./services/usage-fetcher');

@@ -30,7 +30,17 @@ export function setDatabaseProfile(profileId: string) {
 }
 
 export function getDatabase() {
-  if (db) return db;
+  // Defensive reopen: if a stale closed sqlite handle is cached, recreate it.
+  if (db && sqlite) {
+    const maybeWithOpen = sqlite as unknown as { open?: boolean };
+    if (maybeWithOpen.open !== false) {
+      return db;
+    }
+    db = null;
+    sqlite = null;
+  } else if (db && !sqlite) {
+    db = null;
+  }
 
   const dbPath = path.join(app.getPath('userData'), profileToDbFile(databaseProfile));
   sqlite = new Database(dbPath);

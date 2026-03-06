@@ -222,11 +222,25 @@ export function KeyVault() {
   }
 
   async function handleVerify(id: number) {
+    const existing = keys.find((key) => key.id === id);
+    if (!existing) return;
+
+    const verifiedAt = new Date().toISOString();
+    setKeys((current) => current.map((key) => (
+      key.id === id
+        ? { ...key, lastVerifiedAt: verifiedAt }
+        : key
+    )));
+
     try {
       await window.omniview.invoke('keys:mark-verified', { id });
       toast.success('Secret marked as verified');
-      await loadVaultContext();
     } catch {
+      setKeys((current) => current.map((key) => (
+        key.id === id
+          ? { ...key, lastVerifiedAt: existing.lastVerifiedAt }
+          : key
+      )));
       toast.error('Failed to mark secret as verified');
     }
   }

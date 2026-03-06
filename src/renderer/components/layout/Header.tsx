@@ -3,6 +3,7 @@ import { useProxy } from '../../hooks/useProxy';
 import { useVault } from '../../hooks/useVault';
 import { useUiStore } from '../../store/ui-store';
 import { cn } from '../ui/cn';
+import { SidebarTrigger } from '../ui/sidebar';
 import { VaultProfileSwitcher } from './VaultProfileSwitcher';
 
 export function Header() {
@@ -16,7 +17,8 @@ export function Header() {
       className="drag-region relative z-30 flex h-14 items-center justify-between border-b border-border bg-background/88 px-4 backdrop-blur-xl"
       style={{ paddingRight: `calc(1rem + ${windowControlsInset}px)` }}
     >
-      <div className="flex w-40 items-center">
+      <div className="flex w-52 items-center gap-2">
+        <SidebarTrigger className="md:hidden" />
         <div className="no-drag flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.12em] text-muted-foreground">
           <span
             className={cn(

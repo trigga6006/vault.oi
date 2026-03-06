@@ -11,9 +11,17 @@ import {
 import { toast } from 'sonner';
 import { useVault } from '../../hooks/useVault';
 import { ProxySettings } from './ProxySettings';
+import { useUiStore, type PetKind } from '../../store/ui-store';
+
+const PET_OPTIONS: { kind: PetKind; label: string; desc: string; color: string }[] = [
+  { kind: 'uv',      label: 'UV',      desc: 'Bioluminescent blob',  color: 'oklch(0.72 0.28 320)' },
+  { kind: 'void',    label: 'Void',    desc: 'Shadow entity',        color: 'oklch(0.32 0.18 355)' },
+  { kind: 'crystal', label: 'Crystal', desc: 'Ice shard',            color: 'oklch(0.82 0.14 210)' },
+];
 
 export function SettingsView() {
   const { autoLockMinutes, changePassword, setAutoLock } = useVault();
+  const { petKind, setPetKind } = useUiStore();
   const [nextAutoLock, setNextAutoLock] = useState(autoLockMinutes);
   const [savingAutoLock, setSavingAutoLock] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -235,6 +243,33 @@ export function SettingsView() {
             </button>
           </div>
 
+        </div>
+      </div>
+
+      <div className="glass rounded-[28px] border border-white/8 p-6">
+        <h2 className="text-sm font-medium text-foreground">Security pet</h2>
+        <p className="mt-1.5 text-xs text-muted-foreground">Choose your dashboard companion.</p>
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          {PET_OPTIONS.map(({ kind, label, desc, color }) => (
+            <button
+              key={kind}
+              onClick={() => setPetKind(kind)}
+              className={`flex flex-col items-center gap-2.5 rounded-2xl border p-4 transition-all ${
+                petKind === kind
+                  ? 'border-ring bg-accent shadow-sm'
+                  : 'border-border bg-secondary/30 hover:bg-accent/50'
+              }`}
+            >
+              <div
+                className="h-5 w-5 rounded-full"
+                style={{ background: color, boxShadow: petKind === kind ? `0 0 12px ${color}` : 'none' }}
+              />
+              <div className="text-center">
+                <div className="font-mono text-[11px] font-medium uppercase tracking-wider text-foreground">{label}</div>
+                <div className="mt-0.5 text-[10px] text-muted-foreground">{desc}</div>
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 

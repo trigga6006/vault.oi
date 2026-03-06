@@ -84,6 +84,7 @@ type OmniViewApi = {
     payload: IpcChannelMap[C]['req'],
   ) => Promise<IpcChannelMap[C]['res']>;
   on: (channel: IpcEventChannel, callback: (...args: unknown[]) => void) => () => void;
+  setWindowTheme: (theme: 'dark' | 'light') => void;
   platform: NodeJS.Platform;
 };
 
@@ -103,6 +104,9 @@ const api: OmniViewApi = {
     const listener = (_event: Electron.IpcRendererEvent, ...args: unknown[]) => callback(...args);
     ipcRenderer.on(channel, listener);
     return () => ipcRenderer.removeListener(channel, listener);
+  },
+  setWindowTheme: (theme) => {
+    ipcRenderer.send('window:set-theme', theme);
   },
   platform: process.platform,
 };

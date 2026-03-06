@@ -95,7 +95,7 @@ export class KeyVaultService {
 
   async markVerified(id: number): Promise<void> {
     const now = new Date().toISOString();
-    await apiKeyRepo.update(id, { lastVerifiedAt: now, updatedAt: now });
+    await apiKeyRepo.update(id, { lastVerifiedAt: now });
   }
 
   /** Delete a key */
