@@ -4,7 +4,7 @@ import { apiKeyRepo } from '../database/repositories/api-key.repo';
 import { projectRepo } from '../database/repositories/project.repo';
 import { vaultService } from './vault-service';
 
-const EXPORT_VERSION = 1;
+const EXPORT_VERSION = 2;
 
 interface ExportPayload {
   version: number;
@@ -25,7 +25,13 @@ interface ExportPayload {
 }
 
 export class VaultExportService {
-  async exportVault(): Promise<boolean> {
+  /**
+   * Export vault to an encrypted file.
+   * The file is encrypted with a standalone export password — completely
+   * independent of the vault master password. This means the export remains
+   * readable even if the master password is changed later.
+   */
+  async exportVault(exportPassword: string): Promise<boolean> {
     if (!vaultService.isUnlocked) {
       throw new Error('Vault must be unlocked to export');
     }
@@ -60,12 +66,15 @@ export class VaultExportService {
       })),
     };
 
-    // Encrypt using vault's derived key
-    const plaintext = JSON.stringify(payload);
-    const encrypted = vaultService.encrypt(plaintext);
+    // Encrypt with the export password (independent of vault master key)
+    const { encrypted, exportSalt } = vaultService.encryptWithPassword(
+      JSON.stringify(payload),
+      exportPassword,
+    );
 
     const exportData = {
       version: EXPORT_VERSION,
+      exportSalt,
       data: encrypted,
     };
 
@@ -73,7 +82,11 @@ export class VaultExportService {
     return true;
   }
 
-  async importVault(): Promise<{ imported: number }> {
+  /**
+   * Import vault from an encrypted file.
+   * Requires the export password that was used when the file was created.
+   */
+  async importVault(importPassword: string): Promise<{ imported: number }> {
     if (!vaultService.isUnlocked) {
       throw new Error('Vault must be unlocked to import');
     }
@@ -91,8 +104,15 @@ export class VaultExportService {
     const raw = fs.readFileSync(result.filePaths[0], 'utf-8');
     const exportData = JSON.parse(raw);
 
-    // Decrypt using vault's current key
-    const plaintext = vaultService.decrypt(exportData.data);
+    // v2+: password-based encryption with stored salt
+    // v1 (legacy): encrypted with vault's derived key directly
+    let plaintext: string;
+    if (exportData.version >= 2 && exportData.exportSalt) {
+      plaintext = vaultService.decryptWithPassword(exportData.data, importPassword, exportData.exportSalt);
+    } else {
+      // Legacy v1 backups: decrypt with current vault key
+      plaintext = vaultService.decrypt(exportData.data);
+    }
     const payload: ExportPayload = JSON.parse(plaintext);
 
     let imported = 0;

@@ -7,6 +7,7 @@ import {
   Loader2,
   ShieldCheck,
   TimerReset,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useVault } from '../../hooks/useVault';
@@ -30,6 +31,15 @@ export function SettingsView() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
+  // Export password dialog
+  const [showExportDialog, setShowExportDialog] = useState(false);
+  const [exportPassword, setExportPassword] = useState('');
+  const [exportPasswordConfirm, setExportPasswordConfirm] = useState('');
+
+  // Import password dialog
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importPassword, setImportPassword] = useState('');
+
   useEffect(() => {
     setNextAutoLock(autoLockMinutes);
   }, [autoLockMinutes]);
@@ -48,22 +58,48 @@ export function SettingsView() {
   }
 
   async function handleExport() {
+    if (exportPassword.length < 8) return;
+    if (exportPassword !== exportPasswordConfirm) return;
     setExporting(true);
+    setShowExportDialog(false);
     try {
-      const result = (await window.omniview.invoke(
-        'vault:export',
-        undefined,
-      )) as { success: boolean };
-
+      const result = await window.omniview.invoke('vault:export', { password: exportPassword });
       if (result.success) {
-        toast.success('Vault exported');
+        toast.success('Vault exported successfully');
       } else {
-        toast.error('Export failed');
+        toast.error('Export cancelled');
       }
     } catch {
       toast.error('Export failed');
     } finally {
       setExporting(false);
+      setExportPassword('');
+      setExportPasswordConfirm('');
+    }
+  }
+
+  async function handleImport() {
+    if (!importPassword) return;
+    setImportingSecrets(true);
+    setShowImportDialog(false);
+    try {
+      const result = await window.omniview.invoke('vault:import', { password: importPassword });
+      if (result.imported > 0) {
+        toast.success(`Imported ${result.imported} secret${result.imported === 1 ? '' : 's'}`);
+      } else {
+        toast.info('No secrets were imported');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Import failed';
+      // Wrong password produces a decryption error
+      if (msg.toLowerCase().includes('decrypt') || msg.toLowerCase().includes('auth')) {
+        toast.error('Wrong export password — could not decrypt the backup file');
+      } else {
+        toast.error('Import failed');
+      }
+    } finally {
+      setImportingSecrets(false);
+      setImportPassword('');
     }
   }
 
@@ -87,6 +123,17 @@ export function SettingsView() {
     } finally {
       setImportingSecrets(false);
     }
+  }
+
+  function openExportDialog() {
+    setExportPassword('');
+    setExportPasswordConfirm('');
+    setShowExportDialog(true);
+  }
+
+  function openImportDialog() {
+    setImportPassword('');
+    setShowImportDialog(true);
   }
 
   async function handleChangePassword(e: React.FormEvent) {
@@ -213,16 +260,26 @@ export function SettingsView() {
               <h3 className="text-sm font-medium text-foreground">Export vault</h3>
             </div>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              Export your encrypted vault data for backup or migration.
+              Export your vault as an encrypted backup. You'll set a separate export password — this backup stays readable even if you change your master password later.
             </p>
-            <button
-              onClick={handleExport}
-              disabled={exporting}
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.08] disabled:opacity-50"
-            >
-              {exporting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Export encrypted vault
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={openExportDialog}
+                disabled={exporting}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.08] disabled:opacity-50"
+              >
+                {exporting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Export encrypted vault
+              </button>
+              <button
+                onClick={openImportDialog}
+                disabled={importingSecrets}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-white/[0.08] disabled:opacity-50"
+              >
+                {importingSecrets && <Loader2 className="h-4 w-4 animate-spin" />}
+                Import vault backup
+              </button>
+            </div>
           </div>
 
           <div className="mt-8 border-t border-white/8 pt-5">
@@ -285,6 +342,111 @@ export function SettingsView() {
           identity of the product.
         </p>
       </div>
+
+      {/* ── Export password dialog ── */}
+      {showExportDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
+          <div className="glass w-full max-w-sm rounded-[24px] border border-white/10 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Set export password</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  This password encrypts the backup file independently of your master password. You'll need it to import the backup later.
+                </p>
+              </div>
+              <button onClick={() => setShowExportDialog(false)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-5 space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Export password</label>
+                <input
+                  type="password"
+                  value={exportPassword}
+                  onChange={(e) => setExportPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  className="w-full rounded-2xl border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Confirm password</label>
+                <input
+                  type="password"
+                  value={exportPasswordConfirm}
+                  onChange={(e) => setExportPasswordConfirm(e.target.value)}
+                  placeholder="Repeat export password"
+                  className="w-full rounded-2xl border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+              {exportPassword.length > 0 && exportPasswordConfirm.length > 0 && exportPassword !== exportPasswordConfirm && (
+                <p className="text-xs text-destructive">Passwords do not match.</p>
+              )}
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setShowExportDialog(false)}
+                className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2 text-sm text-foreground hover:bg-white/[0.08]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={exportPassword.length < 8 || exportPassword !== exportPasswordConfirm}
+                className="rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/92 disabled:opacity-50"
+              >
+                Export
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Import password dialog ── */}
+      {showImportDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4">
+          <div className="glass w-full max-w-sm rounded-[24px] border border-white/10 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Enter export password</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Enter the password that was set when this backup was exported.
+                </p>
+              </div>
+              <button onClick={() => setShowImportDialog(false)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent">
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-5 space-y-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Export password</label>
+                <input
+                  type="password"
+                  value={importPassword}
+                  onChange={(e) => setImportPassword(e.target.value)}
+                  placeholder="Password used when exporting"
+                  className="w-full rounded-2xl border border-border bg-secondary/50 px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setShowImportDialog(false)}
+                className="rounded-2xl border border-white/8 bg-white/[0.04] px-4 py-2 text-sm text-foreground hover:bg-white/[0.08]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleImport}
+                disabled={!importPassword}
+                className="rounded-2xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/92 disabled:opacity-50"
+              >
+                Import
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

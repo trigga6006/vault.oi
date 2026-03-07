@@ -1,4 +1,5 @@
 import { lazy, Suspense } from 'react';
+import { Toaster } from 'sonner';
 import { VaultSetup } from './components/vault/VaultSetup';
 import { VaultUnlock } from './components/vault/VaultUnlock';
 import { useUiStore } from './store/ui-store';
@@ -79,11 +80,21 @@ export function App() {
   }
 
   if (!initialized) {
-    return <VaultSetup onInitialize={initializeVault} />;
+    return (
+      <>
+        <Toaster position="bottom-center" />
+        <VaultSetup onInitialize={initializeVault} />
+      </>
+    );
   }
 
   if (!unlocked) {
-    return <VaultUnlock onUnlock={unlockVault} />;
+    return (
+      <>
+        <Toaster position="bottom-center" />
+        <VaultUnlock onUnlock={unlockVault} />
+      </>
+    );
   }
 
   return (

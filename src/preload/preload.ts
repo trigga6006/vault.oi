@@ -21,6 +21,7 @@ const INVOKE_CHANNELS = new Set<IpcChannel>([
   'proxy:start',
   'proxy:stop',
   'proxy:status',
+  'proxy:set-log-bodies',
   'config:get-provider',
   'config:save-provider',
   'config:list-providers',

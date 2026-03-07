@@ -59,6 +59,7 @@ export interface ProxyStatus {
   port: number | null;
   requestCount: number;
   upSince: string | null;
+  logRequestBodies: boolean;
 }
 
 export interface IpcChannelMap {
@@ -87,6 +88,7 @@ export interface IpcChannelMap {
   'proxy:start': { req: { port: number }; res: { success: boolean } };
   'proxy:stop': { req: void; res: void };
   'proxy:status': { req: void; res: ProxyStatus };
+  'proxy:set-log-bodies': { req: { enabled: boolean }; res: void };
 
   'config:get-provider': { req: { providerId: string }; res: ProviderConfigRecord | null };
   'config:save-provider': { req: ProviderConfigRecord; res: void };
@@ -102,8 +104,8 @@ export interface IpcChannelMap {
   'vault:lock': { req: void; res: void };
   'vault:change-password': { req: VaultChangePasswordPayload; res: { success: boolean } };
   'vault:set-auto-lock': { req: VaultAutoLockPayload; res: void };
-  'vault:export': { req: void; res: { success: boolean } };
-  'vault:import': { req: void; res: { imported: number } };
+  'vault:export': { req: { password: string }; res: { success: boolean } };
+  'vault:import': { req: { password: string }; res: { imported: number } };
   'vault:import-secrets': { req: void; res: SecretsImportResult };
 
   // Keys

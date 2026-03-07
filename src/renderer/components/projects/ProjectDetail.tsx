@@ -137,10 +137,10 @@ export function ProjectDetail({ project, onBack }: ProjectDetailProps) {
   useEffect(() => {
     fetchAssignments();
     fetchKeys();
-    fetchIntelligence();
     fetchExportPlan();
-    fetchLeakRisk();
-  }, [fetchAssignments, fetchExportPlan, fetchIntelligence, fetchKeys, fetchLeakRisk]);
+    // fetchIntelligence and fetchLeakRisk are on-demand only — they do full
+    // filesystem scans and can take 20+ seconds. Use the scan buttons instead.
+  }, [fetchAssignments, fetchExportPlan, fetchKeys]);
 
   useEffect(() => {
     if (!activeSecretMenu) return undefined;

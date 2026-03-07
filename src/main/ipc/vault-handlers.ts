@@ -44,13 +44,13 @@ export function registerVaultHandlers(): void {
     await vaultService.setAutoLock(minutes);
   });
 
-  registerHandler('vault:export', async () => {
-    const success = await vaultExportService.exportVault();
+  registerHandler('vault:export', async ({ password }) => {
+    const success = await vaultExportService.exportVault(password);
     return { success };
   });
 
-  registerHandler('vault:import', async () => {
-    return vaultExportService.importVault();
+  registerHandler('vault:import', async ({ password }) => {
+    return vaultExportService.importVault(password);
   });
 
   registerHandler('vault:import-secrets', async () => {

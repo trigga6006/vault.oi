@@ -13,4 +13,8 @@ export function registerProxyHandlers(): void {
   registerHandler('proxy:status', async () => {
     return proxyService.getStatus();
   });
+
+  registerHandler('proxy:set-log-bodies', async ({ enabled }) => {
+    proxyService.setLogBodies(enabled);
+  });
 }

@@ -1,10 +1,8 @@
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, session } from 'electron';
+import { app, BrowserWindow, dialog, globalShortcut, ipcMain, nativeImage, session } from 'electron';
 import fs from 'node:fs';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import { extractCliArgs, runCli } from './cli/runner';
-import appIcon from '../assets/app/vaultoi-icon.png';
-
 const CLI_ROOT_TOKENS = new Set([
   'help',
   'version',
@@ -48,9 +46,39 @@ const isCliMode = cliArgsFromFlag !== null
   || cliArgsFromFallback !== null;
 const cliArgs = cliArgsFromFlag ?? cliArgsFromEnv ?? cliArgsFromFallback ?? [];
 const APP_USER_MODEL_ID = 'vault.oi';
-const APP_ICON = appIcon.startsWith('data:')
-  ? nativeImage.createFromDataURL(appIcon)
-  : nativeImage.createFromPath(appIcon);
+
+function resolveAppIcon(): Electron.NativeImage {
+  // nativeImage.createFromPath does NOT work with ASAR paths in packaged builds.
+  // createFromBuffer(fs.readFileSync(...)) is reliable in both dev and packaged
+  // modes because Electron patches fs to transparently read from inside the ASAR.
+  //
+  // Candidate paths tried in order:
+  //   1. ASAR path — works in both dev (real path) and packaged (ASAR-patched fs)
+  //   2. extraResource path — fallback if icon was copied outside ASAR via forge config
+  const ext = process.platform === 'win32' ? 'ico' : 'png';
+  const candidates: string[] = [
+    path.join(app.getAppPath(), 'src', 'assets', 'app', `icon.${ext}`),
+    path.join(process.resourcesPath, `icon.${ext}`),
+  ];
+  // Prefer PNG for createFromBuffer on Windows (reliable; ICO via buffer
+  // is sometimes not decoded correctly). Append PNG fallback candidates.
+  if (ext !== 'png') {
+    candidates.push(
+      path.join(app.getAppPath(), 'src', 'assets', 'app', 'icon.png'),
+      path.join(process.resourcesPath, 'icon.png'),
+    );
+  }
+  for (const p of candidates) {
+    try {
+      const buf = fs.readFileSync(p);
+      const img = nativeImage.createFromBuffer(buf);
+      if (!img.isEmpty()) return img;
+    } catch { /* path not found or unreadable — try next */ }
+  }
+  console.warn('[icon] Could not load app icon from any candidate path');
+  return nativeImage.createEmpty();
+}
+const APP_ICON = resolveAppIcon();
 
 function configureUserDataPathCompatibility(): void {
   const currentUserDataPath = app.getPath('userData');
@@ -346,6 +374,10 @@ app.on('ready', async () => {
 
   await initializeBackendServices();
   createWindow();
+
+  globalShortcut.register('F12', () => {
+    mainWindow?.webContents.toggleDevTools();
+  });
 
   console.log('[Main] Startup complete');
 });

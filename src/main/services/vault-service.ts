@@ -196,6 +196,33 @@ export class VaultService {
     this.resetAutoLockTimer();
   }
 
+  /**
+   * Encrypt plaintext with a standalone password (for export).
+   * Returns the encrypted blob and the salt needed to re-derive the key on import.
+   * The vault does NOT need to be unlocked for this — it derives its own key.
+   */
+  encryptWithPassword(plaintext: string, password: string): { encrypted: string; exportSalt: string } {
+    const salt = crypto.randomBytes(SALT_LENGTH);
+    const key = this.deriveKey(password, salt);
+    const encrypted = this.encryptWithKey(plaintext, key);
+    key.fill(0);
+    return { encrypted, exportSalt: salt.toString('base64') };
+  }
+
+  /**
+   * Decrypt data that was encrypted with encryptWithPassword.
+   * Requires the same password and the exportSalt that was stored in the file.
+   */
+  decryptWithPassword(ciphertext: string, password: string, exportSalt: string): string {
+    const salt = Buffer.from(exportSalt, 'base64');
+    const key = this.deriveKey(password, salt);
+    try {
+      return this.decryptWithKey(ciphertext, key);
+    } finally {
+      key.fill(0);
+    }
+  }
+
   /** Encrypt plaintext using the derived key */
   encrypt(plaintext: string): string {
     if (!this.derivedKey) {

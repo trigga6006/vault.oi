@@ -493,7 +493,7 @@ function TreeCanvas({ map }: { map: GraphMap }) {
         onPointerLeave={handlePointerUp}
         onClick={handleBackgroundClick}
         className={cn(
-          'relative h-[520px] overflow-hidden rounded-b-[24px] bg-card/40',
+          'relative h-[520px] overflow-hidden rounded-b-[24px] bg-stone-100 dark:bg-card/40',
           dragging ? 'cursor-grabbing' : 'cursor-grab',
         )}
         style={{ touchAction: 'none' }}
@@ -501,7 +501,7 @@ function TreeCanvas({ map }: { map: GraphMap }) {
         {/* Subtle dot grid background */}
         <div className="pointer-events-none absolute inset-0"
           style={{
-            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)',
+            backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.08) 1px, transparent 1px)',
             backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
             backgroundPosition: `${pan.x % (24 * zoom)}px ${pan.y % (24 * zoom)}px`,
           }}
@@ -583,7 +583,7 @@ function TreeCanvas({ map }: { map: GraphMap }) {
               className="absolute"
               style={{ left: col.x, top: col.y, width: NODE_W }}
             >
-              <div className="rounded-xl border border-border bg-card/80 px-3 py-2 text-center backdrop-blur-sm">
+              <div className="rounded-xl border border-border bg-stone-200 dark:bg-card/80 px-3 py-2 text-center backdrop-blur-sm">
                 <span className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                   {col.label}
                 </span>
@@ -652,7 +652,7 @@ function TreeNodeCard({
       <div
         className={cn(
           'group relative flex h-full items-start gap-2.5 rounded-2xl border px-3 py-2.5 transition-all duration-200',
-          'bg-card/90 backdrop-blur-sm',
+          'bg-stone-200 dark:bg-card/90 backdrop-blur-sm',
           (node.emphasis || active) && 'ring-1 ring-primary/30',
         )}
         style={{

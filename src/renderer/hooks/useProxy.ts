@@ -9,6 +9,7 @@ export function useProxy() {
     port: null,
     requestCount: 0,
     upSince: null,
+    logRequestBodies: false,
   });
   const [loading, setLoading] = useState(false);
 
@@ -44,6 +45,11 @@ export function useProxy() {
     }
   }, [fetchStatus]);
 
+  const setLogBodies = useCallback(async (enabled: boolean) => {
+    await window.omniview.invoke('proxy:set-log-bodies', { enabled });
+    await fetchStatus();
+  }, [fetchStatus]);
+
   // Poll status
   useEffect(() => {
     fetchStatus();
@@ -51,5 +57,5 @@ export function useProxy() {
     return () => clearInterval(interval);
   }, [fetchStatus]);
 
-  return { status, loading, startProxy, stopProxy };
+  return { status, loading, startProxy, stopProxy, setLogBodies };
 }

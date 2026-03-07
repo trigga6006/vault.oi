@@ -243,6 +243,8 @@ export class ProxyService {
   private port: number | null = null;
   private requestCount = 0;
   private upSince: Date | null = null;
+  /** Defaults to false — request/response bodies are NOT stored unless explicitly enabled. */
+  private logRequestBodies = false;
 
   getStatus(): ProxyStatus {
     return {
@@ -250,7 +252,12 @@ export class ProxyService {
       port: this.port,
       requestCount: this.requestCount,
       upSince: this.upSince?.toISOString() ?? null,
+      logRequestBodies: this.logRequestBodies,
     };
+  }
+
+  setLogBodies(enabled: boolean): void {
+    this.logRequestBodies = enabled;
   }
 
   async start(port: number): Promise<{ success: boolean }> {
@@ -390,7 +397,7 @@ export class ProxyService {
       const [entry] = await requestLogRepo.insert({
         providerId,
         model,
-        requestBody: body || null,
+        requestBody: this.logRequestBodies ? (body || null) : null,
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,
@@ -651,7 +658,7 @@ export class ProxyService {
           latencyMs,
           status: isError ? 'error' : 'success',
           errorCode: isError ? `http_${statusCode}` : null,
-          responseBody: streamed ? null : responseBody.slice(0, 10000),
+          responseBody: (this.logRequestBodies && !streamed) ? responseBody.slice(0, 10000) : null,
           completedAt: new Date().toISOString(),
         });
       }

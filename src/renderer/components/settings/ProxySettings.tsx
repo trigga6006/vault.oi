@@ -259,7 +259,7 @@ const DIM    = 'oklch(0.40 0.006 260)';
 // ─── ProxySettings ────────────────────────────────────────────────────────────
 
 export function ProxySettings() {
-  const { status, loading, startProxy, stopProxy } = useProxy();
+  const { status, loading, startProxy, stopProxy, setLogBodies } = useProxy();
   const [port, setPort] = useState(9876);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -419,6 +419,43 @@ export function ProxySettings() {
           The gateway injects secrets from your encrypted vault, so client apps do
           not need to ship raw provider keys.
         </p>
+      </div>
+
+      {/* ── Request body logging ───────────────────────────────────────────── */}
+      <div className="glass rounded-[28px] border border-white/8 p-5 space-y-3">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h4 className="text-xs font-medium text-foreground">Log request &amp; response bodies</h4>
+            <p className="mt-1 text-xs text-muted-foreground">
+              When enabled, the full text of proxied requests and responses is stored in the local database.
+              Disabled by default to avoid storing sensitive prompt content on disk.
+            </p>
+          </div>
+          <button
+            onClick={() => setLogBodies(!status.logRequestBodies)}
+            className={cn(
+              'relative shrink-0 h-6 w-11 rounded-full border transition-colors',
+              status.logRequestBodies
+                ? 'border-primary bg-primary'
+                : 'border-border bg-secondary/50',
+            )}
+            role="switch"
+            aria-checked={status.logRequestBodies}
+            title={status.logRequestBodies ? 'Disable body logging' : 'Enable body logging'}
+          >
+            <span
+              className={cn(
+                'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform',
+                status.logRequestBodies ? 'translate-x-5' : 'translate-x-0',
+              )}
+            />
+          </button>
+        </div>
+        {status.logRequestBodies && (
+          <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-300">
+            Body logging is on. Prompt text and API responses will be written to the local SQLite database in plain text.
+          </p>
+        )}
       </div>
     </div>
   );

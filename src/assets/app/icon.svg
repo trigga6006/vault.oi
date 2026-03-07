@@ -1,0 +1,73 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="256" y1="0" x2="256" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a1d24"/>
+      <stop offset="1" stop-color="#0c0e12"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="256" y1="100" x2="256" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#60a5fa"/>
+      <stop offset="0.5" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="key" x1="256" y1="180" x2="256" y2="370" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f0f4ff"/>
+      <stop offset="1" stop-color="#c7d2fe"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="inner-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#60a5fa" flood-opacity="0.3"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect x="1.5" y="1.5" width="509" height="509" rx="110.5" stroke="rgba(255,255,255,0.12)" stroke-width="3"/>
+
+  <!-- Subtle grid texture -->
+  <g opacity="0.04">
+    <line x1="128" y1="0" x2="128" y2="512" stroke="white" stroke-width="1"/>
+    <line x1="256" y1="0" x2="256" y2="512" stroke="white" stroke-width="1"/>
+    <line x1="384" y1="0" x2="384" y2="512" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="128" x2="512" y2="128" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="256" x2="512" y2="256" stroke="white" stroke-width="1"/>
+    <line x1="0" y1="384" x2="512" y2="384" stroke="white" stroke-width="1"/>
+  </g>
+
+  <!-- Shield shape with glow -->
+  <g filter="url(#glow)" opacity="0.35">
+    <path d="M256 96 L400 160 L400 296 Q400 380 256 432 Q112 380 112 296 L112 160 Z" fill="#818cf8"/>
+  </g>
+
+  <!-- Shield body -->
+  <path d="M256 96 L400 160 L400 296 Q400 380 256 432 Q112 380 112 296 L112 160 Z" fill="url(#shield)" opacity="0.18"/>
+  <path d="M256 96 L400 160 L400 296 Q400 380 256 432 Q112 380 112 296 L112 160 Z" stroke="url(#shield)" stroke-width="3" fill="none" opacity="0.8"/>
+
+  <!-- Inner shield highlight -->
+  <path d="M256 116 L384 172 L384 290 Q384 364 256 412 Q128 364 128 290 L128 172 Z" stroke="rgba(255,255,255,0.06)" stroke-width="1.5" fill="none"/>
+
+  <!-- Key symbol -->
+  <g filter="url(#inner-glow)">
+    <!-- Key ring (circle) -->
+    <circle cx="256" cy="212" r="44" stroke="url(#key)" stroke-width="8" fill="none"/>
+    <circle cx="256" cy="212" r="18" stroke="url(#key)" stroke-width="5" fill="none"/>
+
+    <!-- Key shaft -->
+    <line x1="256" y1="256" x2="256" y2="362" stroke="url(#key)" stroke-width="8" stroke-linecap="round"/>
+
+    <!-- Key teeth -->
+    <line x1="256" y1="320" x2="282" y2="320" stroke="url(#key)" stroke-width="7" stroke-linecap="round"/>
+    <line x1="256" y1="348" x2="276" y2="348" stroke="url(#key)" stroke-width="7" stroke-linecap="round"/>
+  </g>
+
+  <!-- Corner accent dots -->
+  <circle cx="72" cy="72" r="5" fill="#60a5fa" opacity="0.5"/>
+  <circle cx="440" cy="72" r="5" fill="#818cf8" opacity="0.5"/>
+  <circle cx="72" cy="440" r="5" fill="#818cf8" opacity="0.5"/>
+  <circle cx="440" cy="440" r="5" fill="#6366f1" opacity="0.5"/>
+</svg>
